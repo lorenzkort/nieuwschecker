@@ -6,7 +6,7 @@ platforms = ["osx-arm64"]
 version = "0.1.0"
 
 [tasks]
-postinstall = "spacy download nl_core_news_sm"
+postinstall = "spacy download nl_core_news_lg"
 
 [dependencies]
 python = ">=3.11"

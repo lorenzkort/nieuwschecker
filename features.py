@@ -8,7 +8,7 @@ from collections import Counter
 
 # Load once at module level
 print("loading spacy model")
-nlp = spacy.load("nl_core_news_sm")
+nlp = spacy.load("nl_core_news_lg")
 print("loading embedder")
 embedder = SentenceTransformer("paraphrase-multilingual-MiniLM-L12-v2")
 print("done")

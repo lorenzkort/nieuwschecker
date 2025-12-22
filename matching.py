@@ -1,7 +1,6 @@
 import polars as pl
 import numpy as np
 from sklearn.metrics.pairwise import cosine_similarity
-from typing import List, Dict, Any
 from collections import defaultdict
 
 
@@ -73,6 +72,7 @@ def cluster_articles(df: pl.DataFrame, threshold: float = 0.7) -> pl.DataFrame:
             "link": article["link"],
             "feed": article["base_url"],
             "summary": article.get("summary", ""),
+            
         })
     
     # Convert clusters to output format
@@ -160,18 +160,8 @@ def print_cluster_summary(clusters_df: pl.DataFrame) -> None:
 if __name__ == "__main__":
     # Example usage with multiple feeds
     from rss_parser import parse_rss_feeds
-    
-    feed_urls = [
-        "https://feeds.nos.nl/nosnieuwsalgemeen",
-        "https://www.ad.nl/home/rss.xml",
-        "https://www.ad.nl/binnenland/rss.xml",
-        "https://www.ad.nl/politiek/rss.xml",
-        "https://feeds.feedburner.com/nrc/FmXV",
-        "https://www.volkskrant.nl/voorpagina/rss.xml",
-        # "https://www.telegraaf.nl/rss/",
-        "https://www.nd.nl/rss/nieuws"
-        # Add more feeds here as needed
-    ]
+    from utils import DEFAULT_RSS_URLS
+    feed_urls = DEFAULT_RSS_URLS
     
     print("Fetching and parsing RSS feeds...")
     df = parse_rss_feeds(feed_urls)
@@ -182,14 +172,14 @@ if __name__ == "__main__":
     all_clusters = cluster_articles(df, threshold=0.8)
     
     # Get only cross-feed clusters (stories covered by multiple sources)
-    cross_feed_clusters = get_cross_feed_clusters(df, threshold=0.65, min_feeds=2)
+    cross_feed_clusters = get_cross_feed_clusters(df, threshold=0.8, min_feeds=2)
     
     # Display results
     print_cluster_summary(cross_feed_clusters)
     
     # Export to JSON
-    export_clusters_readable(all_clusters, "data/all_clusters.json")
-    export_clusters_readable(cross_feed_clusters, "data/cross_feed_clusters.json")
+    export_clusters_readable(all_clusters, "data/output/all_clusters.json")
+    export_clusters_readable(cross_feed_clusters, "data/output/cross_feed_clusters.json")
     
     # Statistics
     total_articles = df.height

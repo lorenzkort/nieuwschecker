@@ -82,9 +82,7 @@ def parse_rss_feeds(feed_urls: List) -> pl.DataFrame:
     return pl.union(dfs).unique(subset=["link"], keep="first")
 
 if __name__ == "__main__":
-    feed_urls = [
-        "https://feeds.nos.nl/nosnieuwsalgemeen",
-        "https://www.ad.nl/home/rss.xml"
-    ]
-    df = parse_rss_feeds(feed_urls)
-    print(df)
+    from utils import DEFAULT_RSS_URLS
+    df = parse_rss_feeds(DEFAULT_RSS_URLS)
+    df = df.drop("embedding")
+    df.write_json('data/output/articles.json')
