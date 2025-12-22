@@ -1,0 +1,21 @@
+[workspace]
+authors = ["Lorenz Kort <lorenz.kort@gmail.com>"]
+channels = ["conda-forge"]
+name = "news-data"
+platforms = ["osx-arm64"]
+version = "0.1.0"
+
+[tasks]
+postinstall = "spacy download nl_core_news_sm"
+
+[dependencies]
+python = ">=3.11"
+pip = "*" # needed for spacy postinstall of nl_core_news_sm model
+feedparser = ">=6.0.12,<7"
+pathlib = ">=1.0.1,<2"
+ipykernel = ">=7.1.0,<8"
+beautifulsoup4 = ">=4.14.3,<5"
+lxml = ">=6.0.2,<7"
+spacy = ">=3.8.11,<4"
+sentence-transformers = ">=5.2.0,<6"
+ipywidgets = "*"
