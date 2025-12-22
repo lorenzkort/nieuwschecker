@@ -164,6 +164,8 @@ if __name__ == "__main__":
     feed_urls = [
         "https://feeds.nos.nl/nosnieuwsalgemeen",
         "https://www.ad.nl/home/rss.xml",
+        "https://www.ad.nl/binnenland/rss.xml",
+        "https://www.ad.nl/politiek/rss.xml",
         "https://feeds.feedburner.com/nrc/FmXV",
         "https://www.volkskrant.nl/voorpagina/rss.xml",
         # "https://www.telegraaf.nl/rss/",

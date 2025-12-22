@@ -79,7 +79,7 @@ def articles_to_df(feed_url: str) -> pl.DataFrame:
 
 def parse_rss_feeds(feed_urls: List) -> pl.DataFrame:
     dfs = [articles_to_df(url) for url in feed_urls]
-    return pl.union(dfs) 
+    return pl.union(dfs).unique(subset=["link"], keep="first")
 
 if __name__ == "__main__":
     feed_urls = [
