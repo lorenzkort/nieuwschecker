@@ -64,6 +64,7 @@ def article_to_row(article_dict: Dict[str, Any]) -> Dict[str, Any]:
 
 def articles_to_df(feed_url: str) -> pl.DataFrame:
     """Fetch RSS feed, parse articles, and return a Polars DataFrame."""
+    print(f"parsing {feed_url}")
     feed = ingest_rss_to_text(feed_url)
     rows: List[Dict[str, Any]] = []
 
