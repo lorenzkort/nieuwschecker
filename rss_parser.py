@@ -1,10 +1,10 @@
 import feedparser
-from pathlib import Path
 from bs4 import BeautifulSoup
 from features import gen_features
 from datetime import datetime
 import polars as pl
 from typing import Dict, Any, List
+from urllib.parse import urlparse
 
 
 def ingest_rss_to_text(feed_url: str) -> feedparser.FeedParserDict:
@@ -38,6 +38,7 @@ def parse_nos_article(article: Dict[str, Any]) -> Dict[str, Any]:
         "publish_date": publish_date,
         "title": title,
         "link": link,
+        "base_url": urlparse(link)[1],
         "summary": summary,
         "features": features,
     }
@@ -51,6 +52,7 @@ def article_to_row(article_dict: Dict[str, Any]) -> Dict[str, Any]:
         "publish_date": article_dict["publish_date"],
         "title": article_dict["title"],
         "link": article_dict["link"],
+        "base_url": article_dict["base_url"],
         "summary": article_dict["summary"],
         "embedding": features["embedding"].tolist(),  # numpy → list
         "keywords": features["keywords"],
