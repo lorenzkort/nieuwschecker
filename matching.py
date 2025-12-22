@@ -186,8 +186,8 @@ if __name__ == "__main__":
     print_cluster_summary(cross_feed_clusters)
     
     # Export to JSON
-    export_clusters_readable(all_clusters, "all_clusters.json")
-    export_clusters_readable(cross_feed_clusters, "cross_feed_clusters.json")
+    export_clusters_readable(all_clusters, "data/all_clusters.json")
+    export_clusters_readable(cross_feed_clusters, "data/cross_feed_clusters.json")
     
     # Statistics
     total_articles = df.height

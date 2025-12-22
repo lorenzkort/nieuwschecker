@@ -16,12 +16,6 @@
                 "summary": "Rusland werkt aan een nieuw wapen waarmee het de satellieten van Starlink – dat deel uitmaakt van SpaceX, het ruimtebedrijf van miljardair Elon Musk – kan aanvallen. Dat meldt persagentschap Associated Press op basis van de inlichtingendiensten van twee Navo-landen. Volg alle ontwikkelingen over de oorlog in Oekraïne in ons liveblog."
             },
             {
-                "title": "Russische generaal gedood in Moskou: ‘Magnetische mijn ging af toen Sarvarov op rempedaal trapte’",
-                "link": "https://www.ad.nl/buitenland/russische-generaal-gedood-in-moskou-magnetische-mijn-ging-af-toen-sarvarov-op-rempedaal-trapte~aaa37cff/",
-                "feed": "www.ad.nl",
-                "summary": "Via Russische media komen meer details naar buiten over de aanslag op de Russische generaal Fanil Sarvarov. De explosie waardoor hij maandagochtend om het leven kwam, ontstond vermoedelijk nadat een ‘magnetische mijn’ onder de auto van de generaal was geplakt. De generaal overleed in het ziekenhuis aan zijn verwondingen."
-            },
-            {
                 "title": "Compromisloos en zelfverzekerd sluit Poetin het jaar af, maar Rusland leeft op een ‘geleende toekomst’",
                 "link": "https://www.nrc.nl/nieuws/2025/12/21/compromisloos-en-zelfverzekerd-sluit-poetin-het-jaar-af-maar-rusland-leeft-op-een-geleende-toekomst-a4915633",
                 "feed": "www.nrc.nl",
@@ -52,12 +46,12 @@
                 "summary": "Een Russische generaal is maandag gedood bij een bomaanslag in Moskou. Fanil Sarvarov stond aan het hoofd van de afdeling Operationele Training van de Russische strijdkrachten. Rusland vermoedt dat Oekraïne achter de aanslag zit."
             }
         ],
-        "num_articles": 8,
+        "num_articles": 7,
         "feeds": [
             "www.nrc.nl",
             "www.ad.nl",
-            "nos.nl",
-            "www.nd.nl"
+            "www.nd.nl",
+            "nos.nl"
         ],
         "num_feeds": 4
     },
@@ -155,52 +149,10 @@
         "feeds": [
             "www.nrc.nl",
             "www.ad.nl",
-            "nos.nl",
-            "www.nd.nl"
+            "www.nd.nl",
+            "nos.nl"
         ],
         "num_feeds": 4
-    },
-    {
-        "cluster_id": 21,
-        "title": "Stop met alle nostalgie rond vuurwerk",
-        "articles": [
-            {
-                "title": "Stop met alle nostalgie rond vuurwerk",
-                "link": "https://www.ad.nl/commentaar/stop-met-alle-nostalgie-rond-vuurwerk~af85bdfe/",
-                "feed": "www.ad.nl",
-                "summary": "Al tien kinderen hebben de afgelopen tijd een hand of vingers verloren door zwaar vuurwerk. En dan moet de piek richting de jaarwisseling nog komen. Het vuurwerkverbod zal voorlopig nog geen einde maken aan al die persoonlijke drama’s, schrijft politiek verslaggever Hans van Soest in dit commentaar."
-            },
-            {
-                "title": "Veel kinderen gewond door vuurwerk, kan een verbod daar een einde aan maken?",
-                "link": "https://www.ad.nl/binnenland/veel-kinderen-gewond-door-vuurwerk-kan-een-verbod-daar-een-einde-aan-maken~a88ec7e6/",
-                "feed": "www.ad.nl",
-                "summary": "Het moet nog kerst worden, maar illegaal vuurwerk leidde dit jaar al tot tien amputaties. De slachtoffers van ernstig letsel worden bovendien steeds jonger. Gaat het naderende vuurwerkverbod een einde maken aan deze tendens? Vier vragen en antwoorden."
-            },
-            {
-                "title": "Reacties op vuurwerk: ‘Bij ons vallen er geen slachtoffers in een oorlog, maar bij een feestje’",
-                "link": "https://www.ad.nl/lezersbrieven/reacties-op-vuurwerk-bij-ons-vallen-er-geen-slachtoffers-in-een-oorlog-maar-bij-een-feestje~a563bcdd/",
-                "feed": "www.ad.nl",
-                "summary": "Waarom laten ouders hun jonge kinderen met vuurwerkexplosieven naar buiten gaan? En: ‘Met zo’n trage postbezorging bezorg ik mijn kerstkaarten zelf wel’. Verder: ‘Je moet niet lacherig doen over de gevolgen van hout stoken’. Dit zijn enkele reacties van lezers bij het nieuws van de dag. Je kunt zelf een reactie insturen via brieven@ad.nl."
-            },
-            {
-                "title": "Jongeren verliezen vaker ledematen door zeer zwaar vuurwerk, al voor de jaarwisseling",
-                "link": "https://www.nd.nl/nieuws/nederland/1297481/jongeren-verliezen-vaker-ledematen-door-zeer-zwaar-vuurwerk-a",
-                "feed": "www.nd.nl",
-                "summary": "Het aantal jongeren dat door zwaar vuurwerk ledematen verliest, is fors gestegen. Tot maandag hebben twaalf kinderen vingers, een hand of een arm verloren. De slachtoffers worden ook steeds jonger."
-            },
-            {
-                "title": "Handchirurgen: verdubbeling van amputaties door illegaal vuurwerk",
-                "link": "https://www.nd.nl/varia/varia/1297439/handchirurgen-verdubbeling-van-amputaties-door-illegaal-vuurwerk",
-                "feed": "www.nd.nl",
-                "summary": "Het afgelopen jaar is het aantal jongeren dat een hand of arm is verloren door exploderend vuurwerk meer dan verdubbeld. Dat komt volgens de Nederlandse Vereniging voor Handchirurgie (NVvH) vooral door \"de illegale Cobra\"."
-            }
-        ],
-        "num_articles": 5,
-        "feeds": [
-            "www.ad.nl",
-            "www.nd.nl"
-        ],
-        "num_feeds": 2
     },
     {
         "cluster_id": 13,
@@ -219,6 +171,12 @@
                 "summary": "Het kweekvlees van Meatable, dat een methode ontwikkelde om met dierlijke cellen vlees te laten groeien in een laboratorium, is uiteindelijk nergens ter wereld op de markt gebracht."
             },
             {
+                "title": "3M betaalt ondernemers Westerschelde voor PFAS-schade",
+                "link": "https://www.nd.nl/varia/varia/1297509/3m-betaalt-ondernemers-westerschelde-voor-pfas-schade",
+                "feed": "www.nd.nl",
+                "summary": "Chemiebedrijf 3M gaat ondernemers rondom de Westerschelde betalen voor schade die zij vanwege de vervuilende stoffen PFAS in het water hebben geleden. Het ministerie van Infrastructuur en Waterstaat meldt dat aan de Tweede Kamer. Het ministerie maakte niet bekend hoeveel geld wordt uitgekeerd, noch welke ondernemers betaald krijgen."
+            },
+            {
                 "title": "Europese Commissie vindt zuivelheffingen China onrechtvaardig",
                 "link": "https://www.nd.nl/varia/varia/1297473/europese-commissie-vindt-zuivelheffingen-china-onrechtvaardig",
                 "feed": "www.nd.nl",
@@ -231,7 +189,7 @@
                 "summary": "China legt voorlopige importheffingen op bepaalde zuivelproducten uit de Europese Unie op. De heffingen lopen uiteen van 21,9 tot 42,7 procent en gaan dinsdag in, aldus het Chinese ministerie van Handel. De voorlopige heffingen gaan ook gelden voor FrieslandCampina."
             }
         ],
-        "num_articles": 4,
+        "num_articles": 5,
         "feeds": [
             "www.nrc.nl",
             "www.nd.nl",
@@ -265,8 +223,8 @@
         "num_articles": 3,
         "feeds": [
             "www.ad.nl",
-            "nos.nl",
-            "www.nd.nl"
+            "www.nd.nl",
+            "nos.nl"
         ],
         "num_feeds": 3
     },
@@ -296,8 +254,8 @@
         "num_articles": 3,
         "feeds": [
             "www.ad.nl",
-            "nos.nl",
-            "www.nd.nl"
+            "www.nd.nl",
+            "nos.nl"
         ],
         "num_feeds": 3
     },
@@ -333,7 +291,37 @@
         "num_feeds": 3
     },
     {
-        "cluster_id": 26,
+        "cluster_id": 23,
+        "title": "Stop met alle nostalgie rond vuurwerk",
+        "articles": [
+            {
+                "title": "Stop met alle nostalgie rond vuurwerk",
+                "link": "https://www.ad.nl/commentaar/stop-met-alle-nostalgie-rond-vuurwerk~af85bdfe/",
+                "feed": "www.ad.nl",
+                "summary": "Al tien kinderen hebben de afgelopen tijd een hand of vingers verloren door zwaar vuurwerk. En dan moet de piek richting de jaarwisseling nog komen. Het vuurwerkverbod zal voorlopig nog geen einde maken aan al die persoonlijke drama’s, schrijft politiek verslaggever Hans van Soest in dit commentaar."
+            },
+            {
+                "title": "Veel kinderen gewond door vuurwerk, kan een verbod daar een einde aan maken?",
+                "link": "https://www.ad.nl/binnenland/veel-kinderen-gewond-door-vuurwerk-kan-een-verbod-daar-een-einde-aan-maken~a88ec7e6/",
+                "feed": "www.ad.nl",
+                "summary": "Het moet nog kerst worden, maar illegaal vuurwerk leidde dit jaar al tot tien amputaties. De slachtoffers van ernstig letsel worden bovendien steeds jonger. Gaat het naderende vuurwerkverbod een einde maken aan deze tendens? Vier vragen en antwoorden."
+            },
+            {
+                "title": "Jongeren verliezen vaker ledematen door zeer zwaar vuurwerk, al voor de jaarwisseling",
+                "link": "https://www.nd.nl/nieuws/nederland/1297481/jongeren-verliezen-vaker-ledematen-door-zeer-zwaar-vuurwerk-a",
+                "feed": "www.nd.nl",
+                "summary": "Het aantal jongeren dat door zwaar vuurwerk ledematen verliest, is fors gestegen. Tot maandag hebben twaalf kinderen vingers, een hand of een arm verloren. De slachtoffers worden ook steeds jonger."
+            }
+        ],
+        "num_articles": 3,
+        "feeds": [
+            "www.ad.nl",
+            "www.nd.nl"
+        ],
+        "num_feeds": 2
+    },
+    {
+        "cluster_id": 28,
         "title": "Zambia maakt in extremis gelijk tegen Mali, Mohamed Salah en Egypte vanavond in actie",
         "articles": [
             {
@@ -357,11 +345,35 @@
         ],
         "num_articles": 3,
         "feeds": [
-            "www.ad.nl",
             "www.volkskrant.nl",
+            "www.ad.nl",
             "www.nd.nl"
         ],
         "num_feeds": 3
+    },
+    {
+        "cluster_id": 1,
+        "title": "Ernstig verkeersongeval in Nunspeet, meerdere gewonden",
+        "articles": [
+            {
+                "title": "Ernstig verkeersongeval in Nunspeet, meerdere gewonden",
+                "link": "https://nos.nl/l/2595656",
+                "feed": "nos.nl",
+                "summary": "Bij een ernstig verkeersongeval in Nunspeet zijn meerdere gewonden gevallen. Dat meldt de politie op X, die verder nog geen informatie heeft. Volgens Omroep Gelderland is een auto ingereden op een menigte. De toedracht van het ongeval is onbekend. In Nunspeet wordt vanavond de jaarlijkse lichtjesparade gehouden, waarbij met lichtjes versierde auto's door Nunspeet en Elburg rijden. De hulpdiensten zijn massaal uitgerukt. Er zijn onder meer meerdere traumahelikopters opgeroepen."
+            },
+            {
+                "title": "Auto rijdt in op groep mensen tijdens lichtjesparade, meerdere gewonden",
+                "link": "https://www.ad.nl/binnenland/auto-rijdt-in-op-groep-mensen-tijdens-lichtjesparade-meerdere-gewonden~a5f2f6c34/",
+                "feed": "www.ad.nl",
+                "summary": "Een auto is ingereden op een lichtjesparade in Nunspeet. Er liggen meerdere gewonden in een weiland."
+            }
+        ],
+        "num_articles": 2,
+        "feeds": [
+            "www.ad.nl",
+            "nos.nl"
+        ],
+        "num_feeds": 2
     },
     {
         "cluster_id": 2,
@@ -436,7 +448,7 @@
         "num_feeds": 2
     },
     {
-        "cluster_id": 27,
+        "cluster_id": 29,
         "title": "Venezuela krijgt ‘volledige steun’ Rusland in conflict met VS",
         "articles": [
             {
@@ -460,7 +472,7 @@
         "num_feeds": 2
     },
     {
-        "cluster_id": 141,
+        "cluster_id": 142,
         "title": "Schutters waren maanden bezig met voorbereiding van de aanslag bij Bondi Beach, blijkt uit nieuw politierapport",
         "articles": [
             {
@@ -478,8 +490,8 @@
         ],
         "num_articles": 2,
         "feeds": [
-            "www.nd.nl",
-            "www.nrc.nl"
+            "www.nrc.nl",
+            "www.nd.nl"
         ],
         "num_feeds": 2
     }
