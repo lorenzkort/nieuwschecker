@@ -86,3 +86,4 @@ if __name__ == "__main__":
         "https://www.ad.nl/home/rss.xml"
     ]
     df = parse_rss_feeds(feed_urls)
+    print(df)

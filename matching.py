@@ -56,4 +56,4 @@ if __name__ == "__main__":
     df = parse_rss_feeds(feed_urls)
 
     matched_df = match_articles(df, threshold=0.65)
-    print(matched_df.sort("similarity").head(10).write_json())
+    print(matched_df.sort("similarity").head(10).write_json("matches.json"))

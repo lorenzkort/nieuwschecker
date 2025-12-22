@@ -2,9 +2,10 @@
 Goal: Covering real-time News Coverage Assymmetries
 
 MVP Phase 1:
-- Figure out how to extract topics and match them to other articles: use simple NLP-libraries, no LLM's (yet)
-- Ingest Title's and content of news articles every hour for NOS.nl
-- Ingest Title's and content of news articles every hour for RTL Nieuws
+- [x] Ingest Title's and content of news articles every hour for NOS.nl
+- [x] Ingest Title's and content of news articles every hour for AD.nl
+- [x] Figure out how to extract topics and match them to other articles: use simple NLP-libraries, no LLM's (yet)
+- [ ] Categorise into topics
 
 MVP Phase 2:
 - Ingest Title's and content of news articles every hour for:
@@ -39,4 +40,4 @@ MVP Phase 2:
     - Normalised by total output
     - Compared across clusters
 - Final Feature:
-    - “Today, asylum-related court rulings were covered by Telegraaf, AD and RTL, but absent from NOS, NRC and Volkskrant.”
+    - “Today, {popular theme} was covered by {news outlets}, but absent from {news outlets}. 
