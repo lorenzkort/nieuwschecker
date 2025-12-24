@@ -13,10 +13,6 @@ db = "duckdb -ui -readonly data/prod.duckdb"
 python = ">=3.11"
 pip = "*" # needed for spacy postinstall of nl_core_news_sm model
 
-ibis-postgres = "*"
-connectorx = ">=0.4.3,<0.5"
-duckdb = ">=1.4.3,<2"
-
 [pypi-dependencies]
 feedparser = ">=6.0.12,<7"
 pathlib = ">=1.0.1,<2"
@@ -26,6 +22,11 @@ lxml = ">=6.0.2,<7"
 spacy = ">=3.8.11,<4"
 sentence-transformers = ">=5.2.0,<6"
 polars = ">=1.36.1,<2"
+duckdb = ">=1.4.3,<2"
+
+plotly = ">=6.5.0,<7"
+streamlit = ">=1.52.2,<2"
+pandas = ">=2.3.3,<3"
 
 # Dagster
 dagster = "*"
@@ -33,10 +34,10 @@ dagster-webserver = "*"
 dagster-docker = "*"
 dagster-postgres = "*"
 dagster-polars = "*"
-dagster_iceberg = "*"
 
 defs = {path = "./codelocation", editable = true}
 
 # IO manager
 # Database handling
 types-psycopg2 = ">=2.9.21.20250915, <3"
+protobuf = "*"

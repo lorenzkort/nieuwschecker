@@ -5,11 +5,20 @@ from typing import Dict, Any, List
 from urllib.parse import urlparse
 from feedparser import FeedParserDict
 
+logging = dg.get_dagster_logger()
+
 
 def ingest_rss_to_text(feed_url: str) -> FeedParserDict:
     """Fetch and parse an RSS feed, raising an error if parsing fails."""
     from feedparser import parse
-    feed = parse(feed_url)
+    feed = parse(
+        feed_url,
+        agent='',
+        request_headers={
+            'Accept': 'application/rss+xml, application/xml, text/xml',
+            'Accept-Language': 'nl-NL,nl;q=0.9',
+        }
+    )
     if feed.bozo:
         raise ValueError(f"Failed to parse RSS feed: {feed.bozo_exception}")
     return feed
@@ -24,7 +33,12 @@ def parse_article(article: Dict[str, Any]) -> Dict[str, Any]:
     title = article.get("title")
     link = article.get("link")
     summary_html = article.get("summary_detail", {}).get("value", "")
-    summary = html_to_text(summary_html)
+    if not summary_html:
+        # Get description, but ensure it's a string
+        description = article.get("description", "")
+        summary_html = description if isinstance(description, str) else ""
+
+    summary = html_to_text(summary_html) if summary_html else ""
 
     return {
         "publish_date": publish_date,
@@ -34,10 +48,9 @@ def parse_article(article: Dict[str, Any]) -> Dict[str, Any]:
         "summary": summary,
     }
 
-
 def articles_to_df(feed_url: str) -> pl.DataFrame:
     """Fetch RSS feed, parse articles, and return a Polars DataFrame."""
-    print(f"parsing {feed_url}")
+    logging.info(f"parsing {feed_url}")
     feed = ingest_rss_to_text(feed_url)
     rows: List[Dict[str, Any]] = []
 
@@ -90,3 +103,8 @@ def rss_feeds_historic(context: dg.AssetExecutionContext, rss_feeds_latest: pl.D
     combined = pl.concat([historic_df, rss_feeds_latest])
     return combined.unique(subset=["link"], keep="first")
 
+if __name__ == "__main__":
+    feed_url = 'https://www.telegraaf.nl/rss/'
+    print(
+        articles_to_df(feed_url=feed_url)
+    )
