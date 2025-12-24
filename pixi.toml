@@ -7,10 +7,17 @@ version = "0.1.0"
 
 [tasks]
 postinstall = "spacy download nl_core_news_lg"
+db = "duckdb -ui -readonly data/prod.duckdb"
 
 [dependencies]
 python = ">=3.11"
 pip = "*" # needed for spacy postinstall of nl_core_news_sm model
+
+ibis-postgres = "*"
+connectorx = ">=0.4.3,<0.5"
+duckdb = ">=1.4.3,<2"
+
+[pypi-dependencies]
 feedparser = ">=6.0.12,<7"
 pathlib = ">=1.0.1,<2"
 ipykernel = ">=7.1.0,<8"
@@ -18,5 +25,18 @@ beautifulsoup4 = ">=4.14.3,<5"
 lxml = ">=6.0.2,<7"
 spacy = ">=3.8.11,<4"
 sentence-transformers = ">=5.2.0,<6"
-ipywidgets = "*"
 polars = ">=1.36.1,<2"
+
+# Dagster
+dagster = "*"
+dagster-webserver = "*"
+dagster-docker = "*"
+dagster-postgres = "*"
+dagster-polars = "*"
+dagster_iceberg = "*"
+
+defs = {path = "./codelocation", editable = true}
+
+# IO manager
+# Database handling
+types-psycopg2 = ">=2.9.21.20250915, <3"

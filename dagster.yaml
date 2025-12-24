@@ -1,0 +1,14 @@
+storage:
+  postgres:
+    postgres_db:
+      username: dagster
+      password: dagster # pragma: allowlist secret
+      hostname: localhost
+      db_name: dagster
+      port: 5330
+
+run_coordinator:
+  module: dagster.core.run_coordinator
+  class: QueuedRunCoordinator
+  config:
+    max_concurrent_runs: 10

@@ -1,0 +1,5 @@
+load_from:
+  - python_file:
+      relative_path: codelocation/definitions.py
+      working_directory: codelocation/
+      location_name: codelocation

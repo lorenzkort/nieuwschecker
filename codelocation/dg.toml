@@ -1,0 +1,14 @@
+directory_type = "project"
+
+[project]
+# Since your code is at the root of codelocation
+root_module = "."  # Required
+
+# Optional: specify where your defs folder is
+defs_module = "defs"
+
+# Module containing your Definitions object
+code_location_target_module = "definitions"
+
+# Name for the code location
+code_location_name = "codelocation"

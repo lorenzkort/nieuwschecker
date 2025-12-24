@@ -1,0 +1,48 @@
+services:
+  # PostgreSQL for Dagster
+  dagster_postgres:
+    image: postgres:17
+    environment:
+      POSTGRES_USER: dagster
+      POSTGRES_PASSWORD: dagster
+      POSTGRES_DB: dagster
+    command: -p 5330
+    volumes:
+      - ./dagster-postgres/data:/var/lib/postgresql/data
+    networks:
+      - dagster_network
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U dagster -d dagster']
+      interval: 10s
+      timeout: 8s
+      retries: 5
+    ports:
+      - "5330:5330"
+
+  # storage_postgres:
+  #   image: postgres:17
+  #   environment:
+  #     POSTGRES_USER: storage
+  #     POSTGRES_PASSWORD: storage # pragma: allowlist secret
+  #     POSTGRES_DB: storage
+  #   command: -p 5440
+  #   volumes:
+  #     - ./storage-postgres/data:/var/lib/postgresql/data
+  #   networks:
+  #     - dagster_network
+  #   healthcheck:
+  #     test: ['CMD-SHELL', 'pg_isready -U dagster -d dagster']
+  #     interval: 10s
+  #     timeout: 8s
+  #     retries: 5
+  #   ports:
+  #     - "5440:5440"
+      
+volumes:
+  dagster-postgres:
+  storage-postgres:
+
+networks:
+  dagster_network:
+    driver: bridge
+    name: dagster_network

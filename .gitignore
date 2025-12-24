@@ -1,6 +1,44 @@
+# General
+**/*.log*
 
-# pixi environments
-.pixi
-*.egg-info
+# MacOS
 .DS_Store
-__pycache__/*
+
+# VSCode IDE
+.vscode
+
+# JetBrains IDE
+.idea/*
+
+# Python
+*.pyc
+.mypy_cache
+__pycache__
+*.egg-info/
+
+# Virtual environments
+env/
+var/
+
+# Pixi
+.pixi
+
+# Secret files
+.env
+
+# Logs
+error.log
+
+# Dagster
+**/storage/*
+.nux/*
+.temp*
+.telemetry
+
+# Data
+data/
+!data/seeds
+
+# postgres
+dagster-postgres/
+storage-postgres/
