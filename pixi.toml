@@ -10,34 +10,31 @@ postinstall = "spacy download nl_core_news_lg"
 db = "duckdb -ui -readonly data/prod.duckdb"
 
 [dependencies]
-python = ">=3.11"
-pip = "*" # needed for spacy postinstall of nl_core_news_sm model
+python = ">=3.13.11,<3.14"
+pip = ">=25.3,<26"
+sentence-transformers = ">=5.2.0,<6"
+nbformat = ">=5.10.4,<6"
 
 [pypi-dependencies]
-feedparser = ">=6.0.12,<7"
-pathlib = ">=1.0.1,<2"
-ipykernel = ">=7.1.0,<8"
-beautifulsoup4 = ">=4.14.3,<5"
-lxml = ">=6.0.2,<7"
-spacy = ">=3.8.11,<4"
-sentence-transformers = ">=5.2.0,<6"
-polars = ">=1.36.1,<2"
-duckdb = ">=1.4.3,<2"
-
-plotly = ">=6.5.0,<7"
-streamlit = ">=1.52.2,<2"
-pandas = ">=2.3.3,<3"
-
-# Dagster
-dagster = "*"
-dagster-webserver = "*"
-dagster-docker = "*"
-dagster-postgres = "*"
-dagster-polars = "*"
+feedparser = ">=6.0.12, <7"
+pathlib = ">=1.0.1, <2"
+ipykernel = ">=7.1.0, <8"
+beautifulsoup4 = ">=4.14.3, <5"
+lxml = ">=6.0.2, <7"
+polars = ">=1.36.1, <2"
+duckdb = ">=1.4.3, <2"
+plotly = ">=6.5.0, <7"
+streamlit = ">=1.52.2, <2"
+pandas = "*"
+dagster = ">=1.12.7, <2"
+dagster-webserver = ">=1.12.7, <2"
+dagster-docker = ">=0.28.7, <0.29"
+dagster-postgres = ">=0.28.7, <0.29"
+dagster-polars = ">=0.27.8, <0.28"
 
 defs = {path = "./codelocation", editable = true}
-
-# IO manager
-# Database handling
-types-psycopg2 = ">=2.9.21.20250915, <3"
-protobuf = "*"
+types-psycopg2 = ">=2.9.21.20251012, <3"
+protobuf = ">=6.33.2, <7"
+spacy = "*"
+pyarrow = "*"
+networkx = "*"
