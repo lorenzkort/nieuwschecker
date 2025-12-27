@@ -3,8 +3,10 @@ from dagster import EnvVar, get_dagster_logger
 
 logging = get_dagster_logger()
 
+DATA_DIR = Path(EnvVar("DATA_DIR").get_value() or "")
+
 def parse_default_rss_urls():
-    DEFAULT_RSS_URLS_PATH = Path(EnvVar("DATA_DIR").get_value() + '/seeds/default_rss_urls.csv')
+    DEFAULT_RSS_URLS_PATH = DATA_DIR / 'seeds/default_rss_urls.csv'
     if not DEFAULT_RSS_URLS_PATH.exists():
         logging.error(f"{DEFAULT_RSS_URLS_PATH} does not exist")
         return

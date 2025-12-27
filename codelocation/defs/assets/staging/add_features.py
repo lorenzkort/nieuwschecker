@@ -5,13 +5,18 @@ from collections import Counter
 import dagster as dg
 import polars as pl
 
+from utils.utils import DATA_DIR
+
 logging = dg.get_dagster_logger()
 
 # Load once at module level
 nlp = spacy.load("nl_core_news_lg")
-embedder = SentenceTransformer("paraphrase-multilingual-MiniLM-L12-v2")
+embedder = SentenceTransformer(
+    "paraphrase-multilingual-MiniLM-L12-v2",
+    cache_folder=str(DATA_DIR / "cache")
+)
 
-def gen_features(text: str) -> pl.Expr:
+def gen_features(text: str) -> pl.Struct:
     """
     Generate matching features for a news article.
     These features are designed for cross-outlet deduplication.
@@ -123,6 +128,6 @@ def add_features(rss_feeds_historic: pl.DataFrame) -> pl.DataFrame:
 
     added_features = rss_feeds_historic.with_columns(
         pl.Series("features", features)
-    ).unnest("features")
+    ).unnest("features").unnest("entities")
 
     return added_features
