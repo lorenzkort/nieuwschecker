@@ -6,7 +6,7 @@ all_asset_job = dg.define_asset_job(
 )
 daily_schedule = dg.ScheduleDefinition(
     name="daily",
-    cron_schedule="0 4 * * *",  # Runs every hour at minute 30
+    cron_schedule="0 22 * * *",  # Runs every day at 23:00
     target=all_asset_job,
     default_status= dg.DefaultScheduleStatus.RUNNING
 )

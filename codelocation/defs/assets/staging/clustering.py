@@ -71,11 +71,9 @@ def cluster_articles(df: pl.DataFrame, similarity_threshold: float = 0.7) -> pl.
     for idx, article in enumerate(articles):
         root = find(idx)
         clusters[root].append({
-            "title": article["title"],
+            "title":article["title"],
             "link": article["link"],
             "feed": article["base_url"],
-            "summary": article.get("summary", ""),
-            
         })
     
     # Convert clusters to output format
@@ -108,7 +106,6 @@ def cluster_articles(df: pl.DataFrame, similarity_threshold: float = 0.7) -> pl.
     }
 )
 def cross_feed_clusters(
-    context: dg.AssetExecutionContext,
     add_features: pl.DataFrame,
 ) -> pl.DataFrame:
     """
@@ -165,51 +162,5 @@ def cross_feed_clusters(
                 "records": cluster_records
             }
         }
-        
-        # Create detailed articles table
-        article_records = []
-        for row in cross_feed.iter_rows(named=True):
-            for article in row['articles']:
-                article_records.append({
-                    "cluster_id": row['cluster_id'],
-                    "feed_name": article['feed'].split('/')[-1][:20],
-                    "article_title": article['title'][:60] + "..."
-                })
-        
-        # Add articles detail table as metadata
-        metadata["article_details"] = {
-            "type": "table",
-            "raw_value": {
-                "schema": [
-                    {"name": "cluster_id", "type": "int"},
-                    {"name": "feed_name", "type": "string"},
-                    {"name": "article_title", "type": "string"}
-                ],
-                "records": article_records[:20]  # Limit to first 100 for display
-            }
-        }
-        
-        # Add a markdown summary
-        summary_text = f"""
-# Clustering Summary
-
-- **Total Clusters Found**: {cross_feed.height}
-- **Total Articles**: {metadata['total_articles']}
-- **Avg Articles per Cluster**: {metadata['avg_articles_per_cluster']:.1f}
-- **Avg Feeds per Cluster**: {metadata['avg_feeds_per_cluster']:.1f}
-        """
-        
-        metadata["summary"] = {
-            "type": "md",
-            "raw_value": summary_text
-        }
-    else:
-        metadata["summary"] = {
-            "type": "md", 
-            "raw_value": "No clusters found."
-        }
-    
-    # Log the metadata
-    context.add_output_metadata(metadata)
     
     return cross_feed
