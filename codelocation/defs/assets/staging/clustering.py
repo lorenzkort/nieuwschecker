@@ -1,6 +1,5 @@
 import dagster as dg
 import polars as pl
-from datetime import datetime, timedelta
 
 logging = dg.get_dagster_logger()
 
@@ -78,12 +77,6 @@ def cluster_articles(
                     pub_i = df[i, "publish_date"]
                     pub_j = df[j, "publish_date"]
                     
-                    # Handle both datetime and string formats
-                    if isinstance(pub_i, str):
-                        pub_i = datetime.fromisoformat(pub_i.replace('Z', '+00:00'))
-                    if isinstance(pub_j, str):
-                        pub_j = datetime.fromisoformat(pub_j.replace('Z', '+00:00'))
-                    
                     time_diff_hours = abs((pub_i - pub_j).total_seconds() / 3600)
                     
                     if time_diff_hours <= max_time_window_hours:
@@ -160,13 +153,13 @@ def two_stage_cluster(
     df: pl.DataFrame,
     stage1_threshold: float = 0.6,
     stage2_threshold: float = 0.85,
-    max_cluster_size: int = 10,
+    max_cluster_size: int = 10, #TODO change to nr. of feeds
     max_time_window_hours: int | None = 24
 ) -> pl.DataFrame:
     """
     Perform two-stage clustering to handle both broad topics and specific events.
     
-    Stage 1: Broad topical clustering (lower threshold)
+    Stage 1: Broad topical clustering (lower threshold) with time constraint
     Stage 2: Refined clustering within large clusters (higher threshold + time constraints)
     
     Args:
@@ -174,16 +167,20 @@ def two_stage_cluster(
         stage1_threshold: Similarity threshold for initial broad clustering
         stage2_threshold: Stricter threshold for refining large clusters
         max_cluster_size: Clusters larger than this will be re-clustered
-        max_time_window_hours: Time window for stage 2 clustering (None to disable)
+        max_time_window_hours: Time window for both stage 1 and stage 2 clustering (None to disable)
         
     Returns:
         DataFrame with refined clusters
     """
     logging.info(f"Starting two-stage clustering on {df.height} articles")
     
-    # Stage 1: Broad topical clustering
-    logging.info(f"Stage 1: Broad clustering with threshold {stage1_threshold}")
-    broad_clusters = cluster_articles(df, similarity_threshold=stage1_threshold)
+    # Stage 1: Broad topical clustering WITH time constraint
+    logging.info(f"Stage 1: Broad clustering with threshold {stage1_threshold} and time window {max_time_window_hours}h")
+    broad_clusters = cluster_articles(
+        df, 
+        similarity_threshold=stage1_threshold,
+        max_time_window_hours=max_time_window_hours  # Now applied to Stage 1
+    )
     
     logging.info(f"Stage 1 produced {broad_clusters.height} clusters")
     
@@ -258,7 +255,7 @@ def cross_feed_clusters(
     stage1_threshold: float = 0.6  # Broad topical grouping
     stage2_threshold: float = 0.85  # Refined event-specific clustering
     max_cluster_size: int = 10  # Trigger refinement above this size
-    max_time_window_hours: int = 24  # Only cluster articles within 24 hours
+    max_time_window_hours: int = 24  # Only cluster articles within 24 hours (applied to BOTH stages)
     
     logging.info("Starting two-stage clustering pipeline")
     
@@ -292,12 +289,6 @@ def cross_feed_clusters(
             
             min_date = min(pub_dates)
             max_date = max(pub_dates)
-            
-            # Convert to datetime if needed
-            if isinstance(min_date, str):
-                min_date = datetime.fromisoformat(min_date.replace('Z', '+00:00'))
-            if isinstance(max_date, str):
-                max_date = datetime.fromisoformat(max_date.replace('Z', '+00:00'))
             
             return min_date, max_date
         
@@ -358,12 +349,6 @@ def cross_feed_clusters(
                     min_date = min(pub_dates)
                     max_date = max(pub_dates)
                     
-                    # Convert to datetime if needed
-                    if isinstance(min_date, str):
-                        min_date = datetime.fromisoformat(min_date.replace('Z', '+00:00'))
-                    if isinstance(max_date, str):
-                        max_date = datetime.fromisoformat(max_date.replace('Z', '+00:00'))
-                    
                     time_span = round((max_date - min_date).total_seconds() / 3600, 2)
                     time_range = f"{time_span:.1f}h"
                     
@@ -401,3 +386,10 @@ def cross_feed_clusters(
         }
     
     return cross_feed
+
+if __name__ == "__main__":
+    import polars as pl
+    
+    df = pl.read_parquet('/Users/lorenzkort/Documents/LocalCode/news-data/data/staging/add_features.parquet')
+    clusters = cluster_articles(df)
+    test_cluster = clusters.filter(pl.col("title").str.contains("Bolsonaro"))
