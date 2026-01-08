@@ -5,7 +5,7 @@ logging = dg.get_dagster_logger()
 
 def cluster_articles(
     df: pl.DataFrame, 
-    similarity_threshold: float = 0.7,
+    similarity_threshold: float = 0.8,
     max_time_window_hours: int | None = None
 ) -> pl.DataFrame:
     """
@@ -116,7 +116,7 @@ def cluster_articles(
             "articles": articles_in_cluster,
             "num_articles": len(articles_in_cluster),
             "feeds": feeds,
-            "num_feeds": len(feeds)
+            "num_feeds": len(feeds),
         })
     
     # Sort by number of articles (largest clusters first)
@@ -252,7 +252,7 @@ def cross_feed_clusters(
     min_feeds: int = 2
     
     # Two-stage clustering parameters
-    stage1_threshold: float = 0.6  # Broad topical grouping
+    stage1_threshold: float = 0.8  # Broad topical grouping
     stage2_threshold: float = 0.85  # Refined event-specific clustering
     max_cluster_size: int = 10  # Trigger refinement above this size
     max_time_window_hours: int = 24  # Only cluster articles within 24 hours (applied to BOTH stages)
@@ -316,75 +316,6 @@ def cross_feed_clusters(
             pl.Series("time_span_hours", time_spans)
         ])
 
-    # Create metadata for tracking
-    metadata = {}
-    
-    # Summary metadata
-    metadata["cluster_count"] = cross_feed.height
-    metadata["total_articles"] = cross_feed["num_articles"].sum() if cross_feed.height > 0 else 0
-    metadata["avg_articles_per_cluster"] = cross_feed["num_articles"].mean() if cross_feed.height > 0 else 0
-    metadata["avg_feeds_per_cluster"] = cross_feed["num_feeds"].mean() if cross_feed.height > 0 else 0
-    
-    # Add configuration metadata
-    metadata["clustering_config"] = {
-        "stage1_threshold": stage1_threshold,
-        "stage2_threshold": stage2_threshold,
-        "max_cluster_size": max_cluster_size,
-        "max_time_window_hours": max_time_window_hours,
-        "min_feeds": min_feeds
-    }
-    
-    # Create cluster summary table
-    if cross_feed.height > 0:
-        cluster_records = []
-        for row in cross_feed.iter_rows(named=True):
-            # Get time range if publish_date dates are available
-            time_range = ""
-            min_published = None
-            max_published = None
-            
-            if row['articles'] and 'publish_date' in row['articles'][0]:
-                pub_dates = [art.get('publish_date') for art in row['articles'] if art.get('publish_date')]
-                if pub_dates:
-                    min_date = min(pub_dates)
-                    max_date = max(pub_dates)
-                    
-                    time_span = round((max_date - min_date).total_seconds() / 3600, 2)
-                    time_range = f"{time_span:.1f}h"
-                    
-                    # Store as ISO format strings for the table
-                    min_published = min_date.isoformat()
-                    max_published = max_date.isoformat()
-            
-            cluster_records.append({
-                "cluster_id": row['cluster_id'],
-                "title_preview": row['title'][:80] + "..." if len(row['title']) > 80 else row['title'],
-                "num_articles": row['num_articles'],
-                "num_feeds": row['num_feeds'],
-                "time_span": time_range,
-                "min_published_date": min_published,
-                "max_published_date": max_published,
-                "sources": ', '.join([feed.split('/')[-1] for feed in row['feeds'][:3]])  # Show first 3 sources
-            })
-        
-        # Add cluster summary table as metadata
-        metadata["cluster_summary"] = {
-            "type": "table",
-            "raw_value": {
-                "schema": [
-                    {"name": "cluster_id", "type": "int"},
-                    {"name": "title_preview", "type": "string"},
-                    {"name": "num_articles", "type": "int"},
-                    {"name": "num_feeds", "type": "int"},
-                    {"name": "time_span", "type": "string"},
-                    {"name": "min_published_date", "type": "string"},
-                    {"name": "max_published_date", "type": "string"},
-                    {"name": "sources", "type": "string"}
-                ],
-                "records": cluster_records
-            }
-        }
-    
     return cross_feed
 
 if __name__ == "__main__":
@@ -392,4 +323,4 @@ if __name__ == "__main__":
     
     df = pl.read_parquet('/Users/lorenzkort/Documents/LocalCode/news-data/data/staging/add_features.parquet')
     clusters = cluster_articles(df)
-    test_cluster = clusters.filter(pl.col("title").str.contains("Bolsonaro"))
+    test_cluster = clusters.filter(pl.col("title").str.contains("Maduro"))

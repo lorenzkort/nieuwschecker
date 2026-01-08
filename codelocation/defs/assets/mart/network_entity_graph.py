@@ -13,17 +13,17 @@ def create_network_entity_graph(sentiments: DataFrame) -> None:
     from collections import defaultdict
     import networkx as nx
     import json
-    import pandas as pd
+    import polars as pl
 
     from utils.utils import DATA_DIR
 
-    sentiments = sentiments.to_pandas()
+    pd_sentiments = sentiments.filter(pl.col("mention_count").is_not_nan()).to_pandas()
 
     # Build co-occurrence network (entities appearing in same articles)
     entity_pairs = defaultdict(int)
 
-    for link in sentiments['link'].unique():
-        entities = sentiments[sentiments['link'] == link]['entity'].tolist()
+    for link in pd_sentiments['link'].unique():
+        entities = pd_sentiments[pd_sentiments['link'] == link]['entity'].tolist()
         # Create edges between all entities in same article
         for i, e1 in enumerate(entities):
             for e2 in entities[i+1:]:
@@ -61,7 +61,7 @@ def create_network_entity_graph(sentiments: DataFrame) -> None:
     node_data = {}
     for node in G.nodes():
         neighbors = list(G.neighbors(node))
-        entity_data = sentiments[sentiments['entity'] == node].iloc[0]
+        entity_data = pd_sentiments[pd_sentiments['entity'] == node].iloc[0]
         
         node_data[node] = {
             'pos': pos[node],

@@ -70,7 +70,7 @@ def rss_feeds_latest() -> pl.DataFrame:
     # Add ingestion timestamp
     combined_df = combined_df.with_columns(
         pl.lit(datetime.now()).alias("ingestion_timestamp")
-    )
+    ).filter(pl.col("publish_date").is_not_nan())
     
     return combined_df
 

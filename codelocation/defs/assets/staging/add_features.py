@@ -16,7 +16,7 @@ embedder = SentenceTransformer(
     cache_folder=str(DATA_DIR / "cache")
 )
 
-def gen_features(text: str) -> pl.Struct:
+def gen_features(text: str) -> pl.Expr:
     """
     Generate matching features for a news article.
     These features are designed for cross-outlet deduplication.
@@ -129,5 +129,15 @@ def add_features(rss_feeds_historic: pl.DataFrame) -> pl.DataFrame:
     added_features = rss_feeds_historic.with_columns(
         pl.Series("features", features)
     ).unnest("features").unnest("entities")
+    
+    # Get publish_date from ingestion_timestamp
+    added_features = pl.read_parquet("/Users/lorenzkort/Documents/LocalCode/news-data/data/staging/add_features.parquet")
+    added_missing_publish_date = added_features.with_columns(
+        publish_date=(
+            pl.when(pl.col("publish_date").is_null())
+            .then(pl.col("ingestion_timestamp"))
+            .otherwise(pl.col("publish_date"))
+        )
+    )
 
-    return added_features
+    return added_missing_publish_date

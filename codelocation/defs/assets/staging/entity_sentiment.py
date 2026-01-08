@@ -29,17 +29,20 @@ def get_sentiment_pipeline(model_name: str = "DTAI-KULeuven/robbert-v2-dutch-sen
         )
     return _sentiment_pipeline
 
-def extract_entity_context(text: str, entity: str) -> list:
+def extract_entity_context(text: str, entity: str, min_context_chars: int = 100) -> list:
     """
-    Extract full sentences containing entity mentions.
+    Extract sentences containing entity mentions, with minimum context length.
+    
+    If a sentence is shorter than min_context_chars, expands to include
+    min_context_chars before and after the entity within the full text.
     
     Args:
         text: The full text to analyse
         entity: The entity to find
-        context_window: Not used (kept for backwards compatibility)
+        min_context_chars: Minimum characters to include before and after entity (default: 100)
     
     Returns:
-        List of complete sentences containing the entity
+        List of context strings containing the entity
     """
     import re
     
@@ -49,9 +52,8 @@ def extract_entity_context(text: str, entity: str) -> list:
     entity_lower = entity.lower()
     
     # Split text into sentences (handles ., !, ?)
-    # This pattern keeps the sentence delimiter with the sentence
     sentence_pattern = r'[^.!?]+[.!?]+'
-    sentences = re.findall(sentence_pattern, text_lower)
+    sentences = re.findall(sentence_pattern, text)
     
     # Handle case where text doesn't end with punctuation
     if sentences:
@@ -61,10 +63,28 @@ def extract_entity_context(text: str, entity: str) -> list:
     else:
         sentences = [text]
     
-    # Find sentences containing the entity (case-insensitive)
+    # Track position in original text
+    current_pos = 0
+    
     for sentence in sentences:
-        if entity_lower in sentence.lower():
-            contexts.append(sentence.strip())
+        sentence_lower = sentence.lower()
+        if entity_lower in sentence_lower:
+            # If sentence is long enough, use it as-is
+            if len(sentence) >= min_context_chars * 2:
+                contexts.append(sentence.strip())
+            else:
+                # Find entity position in original text
+                entity_pos_in_text = text_lower.find(entity_lower, current_pos)
+                
+                if entity_pos_in_text != -1:
+                    # Calculate context boundaries
+                    start = max(0, entity_pos_in_text - min_context_chars)
+                    end = min(len(text), entity_pos_in_text + len(entity) + min_context_chars)
+                    
+                    context = text[start:end].strip()
+                    contexts.append(context)
+        
+        current_pos += len(sentence)
     
     return contexts
 
