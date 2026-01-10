@@ -145,9 +145,7 @@ def analyse_entity_sentiment(text: str, entity: str, model_name: str = "DTAI-KUL
         "entity": entity,
         "results": results,
         "mention_count": len(contexts),
-        "positive_mentions": positive_count,
-        "negative_mentions": negative_count,
-        "average_sentiment_score": avg_sentiment,
+        "avg_sentiment_score": avg_sentiment,
     })
 
 def process_entity_sentiments(title: str, summary: str, keywords: list) -> list[str]:
@@ -169,30 +167,45 @@ def process_entity_sentiments(title: str, summary: str, keywords: list) -> list[
     key_prefix="staging",
     ins={
         "add_features": dg.AssetIn(["staging", "add_features"])
+    },
+    metadata={
+        "mode": "overwrite",
+        "delta_write_options": {
+            "schema_mode": "overwrite"
+        }
     }
 )
-def entity_sentiments(add_features: DataFrame) -> DataFrame:
+def entity_sentiments(context: dg.AssetExecutionContext, add_features: DataFrame) -> DataFrame:
     import polars as pl
     
-    add_features = add_features
-    # Load the model once before processing
-    logging.info("Loading sentiment model...")
-    get_sentiment_pipeline()
-    logging.info("Model loaded successfully!")
-    
-    # These are columns which have lists of keywords
-    sentiment_cols = ["PERSON", "ORG", "GPE", "LOC", "EVENT"]    
-    for col in sentiment_cols:
-        logging.info(f"\nProcessing column: {col}")
-        add_features = add_features.with_columns(
-            pl.struct(["title", "summary", col])
-            .map_elements(
-                lambda row: process_entity_sentiments(row["title"], row["summary"], row[col]),
-                return_dtype=pl.List(pl.List(pl.String)),
-            ).alias(f"{col}_sentiment")
+    historic_entity_sentiments = context.load_asset_value(
+            asset_key=dg.AssetKey(["staging", "entity_sentiments"])
         )
     
-    return add_features
+    # Only process new rows who have not been processed before
+    processed_entity_sentiments = DataFrame()
+    sentiment_cols = ["PERSON", "ORG", "GPE", "LOC", "EVENT"]    
+    articles_to_process = add_features.filter(
+        ~pl.col("link").is_in(historic_entity_sentiments["link"]) # gets all new articles
+    )
+    logging.info(f'Articles to process: {len(articles_to_process)}')
+    get_sentiment_pipeline() # Loading LLM model
+    exprs = [
+        pl.struct(["title", "summary", col])
+        .map_elements(
+            lambda row, c=col: process_entity_sentiments(
+                row["title"], row["summary"], row[c]
+            ),
+            return_dtype=pl.List(pl.List(pl.String)),
+        )
+        .alias(f"{col}_sentiment")
+        for col in sentiment_cols
+    ]
+    processed_entity_sentiments = articles_to_process.with_columns(*exprs)
+    
+    # Combine historic and processed
+    combined_entity_sentiments = pl.concat([historic_entity_sentiments, processed_entity_sentiments])
+    return combined_entity_sentiments
 
 @dg.asset(
     key_prefix="staging",
@@ -215,9 +228,7 @@ def sentiments(entity_sentiments: DataFrame) -> DataFrame:
         pl.Field("entity", pl.String),
         pl.Field("results", results_field_type),
         pl.Field("mention_count", pl.Int64),
-        pl.Field("positive_mentions", pl.Int64),
-        pl.Field("negative_mentions", pl.Int64),
-        pl.Field("average_sentiment_score", pl.Float64),
+        pl.Field("avg_sentiment_score", pl.Float64),
     ])
 
     exploded = (
@@ -251,9 +262,8 @@ def sentiments(entity_sentiments: DataFrame) -> DataFrame:
 def sentiments_per_entity(sentiments: DataFrame) -> DataFrame:
     import polars as pl
     return sentiments.group_by(["entity"]).agg(
-            pl.col("average_sentiment_score").mean().round(3),
+            pl.col("avg_sentiment_score").mean().round(3),
             pl.col("mention_count").sum().alias("mentions"),
-            pl.col("mention_count").std().round(3).alias("std"),
             pl.col("link").count().alias("articles")
         ).sort("entity")
     

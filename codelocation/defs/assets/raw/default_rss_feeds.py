@@ -48,7 +48,7 @@ def parse_article(article: Dict[str, Any]) -> Dict[str, Any]:
         "summary": summary,
     }
 
-def articles_to_df(feed_url: str) -> pl.DataFrame:
+def rss_to_df(feed_url: str) -> pl.DataFrame:
     """Fetch RSS feed, parse articles, and return a Polars DataFrame."""
     logging.info(f"parsing {feed_url}")
     feed = ingest_rss_to_text(feed_url)
@@ -64,13 +64,15 @@ def rss_feeds_latest() -> pl.DataFrame:
     """Fetch the latest RSS feeds without partitioning."""
     from utils.utils import DEFAULT_RSS_URLS
     
-    dfs = [articles_to_df(url) for url in DEFAULT_RSS_URLS or []]
+    dfs = [rss_to_df(url) for url in DEFAULT_RSS_URLS or []]
+    debug_dfs = [(url, len(df)) for url, df in zip(DEFAULT_RSS_URLS, dfs)]
+    print(debug_dfs)
     combined_df = pl.concat(dfs).unique(subset=["link"], keep="first")
-    
+
     # Add ingestion timestamp
     combined_df = combined_df.with_columns(
         pl.lit(datetime.now()).alias("ingestion_timestamp")
-    ).filter(pl.col("publish_date").is_not_nan())
+    ).filter(pl.col("publish_date").is_not_null())
     
     return combined_df
 
@@ -93,10 +95,7 @@ def rss_feeds_historic(context: dg.AssetExecutionContext, rss_feeds_latest: pl.D
             asset_key=dg.AssetKey(["raw", "rss_feeds_historic"])
         )
     except Exception as e:
-        context.log.warning(f"No previous historic data found: {e}")
-        historic_df = pl.DataFrame()
-    
-    if historic_df.is_empty():
+        context.log.warning(f"Error loading asset data within function: {e}")
         return rss_feeds_latest
     
     # Merge new data with historic, keeping first occurrence of each link
@@ -104,7 +103,4 @@ def rss_feeds_historic(context: dg.AssetExecutionContext, rss_feeds_latest: pl.D
     return combined.unique(subset=["link"], keep="first")
 
 if __name__ == "__main__":
-    feed_url = 'https://www.telegraaf.nl/rss/'
-    print(
-        articles_to_df(feed_url=feed_url)
-    )
+    rss_feeds_latest()

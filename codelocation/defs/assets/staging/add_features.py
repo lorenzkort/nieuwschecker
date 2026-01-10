@@ -131,7 +131,6 @@ def add_features(rss_feeds_historic: pl.DataFrame) -> pl.DataFrame:
     ).unnest("features").unnest("entities")
     
     # Get publish_date from ingestion_timestamp
-    added_features = pl.read_parquet("/Users/lorenzkort/Documents/LocalCode/news-data/data/staging/add_features.parquet")
     added_missing_publish_date = added_features.with_columns(
         publish_date=(
             pl.when(pl.col("publish_date").is_null())

@@ -68,7 +68,7 @@ def create_network_entity_graph(sentiments: DataFrame) -> None:
             'neighbors': neighbors,
             'colour': node_to_community[node][1],
             'mentions': entity_data['mention_count'],
-            'sentiment': entity_data['average_sentiment_score'],
+            'sentiment': entity_data['avg_sentiment_score'],
             'degree': G.degree(node)
         }
 
