@@ -1,15 +1,16 @@
 import anthropic
 import json
+import os
 
 client = anthropic.Anthropic(
-    api_key="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"
+    api_key=os.environ.get("CLAUDE_API_KEY")
 )
 
 # Create a message with a system prompt
 message = client.messages.create(
     model="claude-sonnet-4-20250514",
     max_tokens=1024,
-    system=open("/Users/lorenzkort/Documents/LocalCode/news-data/data/seeds/fact_checking_sys_prompt_NL.md", 'r').read(),
+    system=open("/Users/lorenzkort/Documents/LocalCode/news-data/analysis/article_bias/fact_checking_sys_prompt_NL.md", 'r').read(),
     messages=[
         {
             "role": "user",
