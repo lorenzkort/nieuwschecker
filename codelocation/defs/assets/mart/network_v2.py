@@ -2,12 +2,12 @@ import dagster as dg
 from polars import DataFrame
 logging = dg.get_dagster_logger()
 
-@dg.asset(
-    key_prefix="mart",
-    ins={
-        "sentiments": dg.AssetIn(["staging", "sentiments"])   
-    }
-)
+# @dg.asset(
+#     key_prefix="mart",
+#     ins={
+#         "sentiments": dg.AssetIn(["staging", "sentiments"])   
+#     }
+# )
 def create_network_entity_graphv2(sentiments: DataFrame) -> None:
     import polars as pl
     import json

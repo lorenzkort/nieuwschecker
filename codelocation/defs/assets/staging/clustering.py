@@ -278,43 +278,18 @@ def cross_feed_clusters(
     
     # Add min and max publish dates as columns
     if cross_feed.height > 0:
-        def extract_dates(articles_list):
-            """Extract min and max publish dates from articles."""
-            if not articles_list or 'publish_date' not in articles_list[0]:
-                return None, None
-            
-            pub_dates = [art.get('publish_date') for art in articles_list if art.get('publish_date')]
-            if not pub_dates:
-                return None, None
-            
-            min_date = min(pub_dates)
-            max_date = max(pub_dates)
-            
-            return min_date, max_date
-        
-        # Extract dates for each row
-        min_dates = []
-        max_dates = []
-        time_spans = []
-        
-        for row in cross_feed.iter_rows(named=True):
-            min_date, max_date = extract_dates(row['articles'])
-            min_dates.append(min_date)
-            max_dates.append(max_date)
-            
-            # Calculate time span in hours
-            if min_date and max_date:
-                time_span = (max_date - min_date).total_seconds() / 3600
-                time_spans.append(time_span)
-            else:
-                time_spans.append(None)
-        
-        # Add as new columns
-        cross_feed = cross_feed.with_columns([
-            pl.Series("min_published_date", min_dates),
-            pl.Series("max_published_date", max_dates),
-            pl.Series("time_span_hours", time_spans)
-        ])
+        cross_feed = cross_feed.with_columns(
+            min_published_date = pl.col("articles").list.eval(
+                pl.element().struct.field("publish_date")
+            ).list.min(),
+            max_published_date = pl.col("articles").list.eval(
+                pl.element().struct.field("publish_date")
+            ).list.max(),
+        ).with_columns(
+            time_span_hours = (
+                pl.col("max_published_date") - pl.col("min_published_date")
+            ).dt.total_hours().round(1)
+        )
 
     return cross_feed
 

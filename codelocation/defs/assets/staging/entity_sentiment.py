@@ -126,10 +126,6 @@ def analyse_entity_sentiment(text: str, entity: str, model_name: str = "DTAI-KUL
             "score": round(sentiment["score"], 3)
         })
     
-    # Calculate aggregate scores
-    positive_count = sum(1 for r in results if r["label"].lower() in ["positive", "pos"])
-    negative_count = sum(1 for r in results if r["label"].lower() in ["negative", "neg"])
-    
     # Calculate weighted average sentiment
     # Assuming positive = +1, negative = -1
     total_sentiment = 0
