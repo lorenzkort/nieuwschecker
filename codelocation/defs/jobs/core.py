@@ -1,11 +1,11 @@
 import dagster as dg
 
-# Daily non-paid job
+# All Asset Job
 all_asset_job = dg.define_asset_job(
-    name="daily_all",
+    name="all_asset_job",
 )
 daily_schedule = dg.ScheduleDefinition(
-    name="daily",
+    name="all_asset_schedule",
     cron_schedule="0 */3 * * *",  # Runs every 3rd hour at minute 0
     target=all_asset_job,
     default_status= dg.DefaultScheduleStatus.RUNNING
