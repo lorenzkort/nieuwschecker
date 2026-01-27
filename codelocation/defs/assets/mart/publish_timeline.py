@@ -8,10 +8,10 @@ logging = dg.get_dagster_logger()
     key_prefix="mart",
     ins={
         "timeline": dg.AssetIn(["staging", "timeline"]),
+        "agency_owners": dg.AssetIn(["raw", "agency_owners"]),
     },
 )
-def create_publish_timeline_html(timeline: DataFrame) -> None:
-    from datetime import datetime
+def create_publish_timeline_html(timeline: DataFrame, agency_owners: DataFrame) -> None:
 
     import polars as pl
     from utils.ftp_manager import StratoUploader
@@ -138,7 +138,7 @@ def create_publish_timeline_html(timeline: DataFrame) -> None:
             .bias-right {{
                 background-color: #E24A4A;
             }}
-            
+        
             .articles-section {{
                 max-height: 0;
                 overflow: hidden;
@@ -261,40 +261,53 @@ def create_publish_timeline_html(timeline: DataFrame) -> None:
         centre_right_perc = int(row["centre right"] * 100)
         right_perc = int(row["right"] * 100)
 
-        # Build bias segments with labels
         bias_segments = []
 
-        if left_perc > 0:
-            label = f"Links {left_perc}%" if left_perc >= 8 else ""
-            bias_segments.append(
-                f'<div class="bias-segment bias-left" style="width: {left_perc}%">{label}</div>'
-            )
+        segments = [
+            ("Links", "bias-left", left_perc),
+            ("C-Links", "bias-centre-left", centre_left_perc),
+            ("Centrum", "bias-centre", centre_perc),
+            ("C-Rechts", "bias-centre-right", centre_right_perc),
+            ("Rechts", "bias-right", right_perc),
+        ]
 
-        if centre_left_perc > 0:
-            label = f"C-Links {centre_left_perc}%" if centre_left_perc >= 8 else ""
-            bias_segments.append(
-                f'<div class="bias-segment bias-centre-left" style="width: {centre_left_perc}%">{label}</div>'
-            )
+        for label_text, css_class, perc in segments:
+            if perc <= 0:
+                continue
 
-        if centre_perc > 0:
-            label = f"Centrum {centre_perc}%" if centre_perc >= 8 else ""
+            label = f"{label_text} {perc}%" if perc >= 1 else ""
             bias_segments.append(
-                f'<div class="bias-segment bias-centre" style="width: {centre_perc}%">{label}</div>'
-            )
-
-        if centre_right_perc > 0:
-            label = f"C-Rechts {centre_right_perc}%" if centre_right_perc >= 8 else ""
-            bias_segments.append(
-                f'<div class="bias-segment bias-centre-right" style="width: {centre_right_perc}%">{label}</div>'
-            )
-
-        if right_perc > 0:
-            label = f"Rechts {right_perc}%" if right_perc >= 8 else ""
-            bias_segments.append(
-                f'<div class="bias-segment bias-right" style="width: {right_perc}%">{label}</div>'
+                f'<div class="bias-segment {css_class}" style="width: {perc}%">{label}</div>'
             )
 
         bias_bar_html = "".join(bias_segments)
+        
+        # Generate ownership distribution - stacked bar like bias chart
+        owners = row.get("owner_reach") or []
+        owners_sorted = sorted(owners, key=lambda o: o.get("total_reach", 0), reverse=True)
+        total_reach = sum(o.get("total_reach", 0) for o in owners)
+
+        owner_segments = []
+
+        for o in owners_sorted:
+            reach_percentage = (o.get("total_reach") / total_reach) * 100
+            
+            # Only show owners with more than 15%
+            if reach_percentage <= 10:
+                continue
+            
+            owner = o.get("owner")
+            color = agency_owners.filter(pl.col("owner") == owner)["color"].item(0)
+            
+            # Show label with percentage, similar to bias chart
+            perc_int = int(reach_percentage)
+            label = f"{owner} {perc_int}%" if perc_int >= 1 else ""
+            
+            owner_segments.append(
+                f'<div  class="bias-segment" style="width: {reach_percentage}%; background-color: {color}">{label}</div>'
+            )
+
+        owner_bar_html = "".join(owner_segments)
 
         # Generate articles HTML
         articles_html_items = []
@@ -322,7 +335,7 @@ def create_publish_timeline_html(timeline: DataFrame) -> None:
                         <span>{row["num_feeds"]} bronnen</span>
                     </div>
                     <div class="metadata-item">
-                        <span>{row["max_published_date"]}</span>
+                        <span>{row["max_published_date_fmt"]}</span>
                     </div>
                 </div>
             </div>
@@ -331,7 +344,11 @@ def create_publish_timeline_html(timeline: DataFrame) -> None:
                 <div class="bias-bar-container">
                     {bias_bar_html}
                 </div>
-            </div>
+                <br>
+                <div class="bias-bar-container">
+                    {owner_bar_html}
+                </div>            
+            </div>            
             
             <div class="expand-indicator">
                 Bekijk nieuwsberichten
@@ -349,7 +366,6 @@ def create_publish_timeline_html(timeline: DataFrame) -> None:
 
     # Generate final HTML
     final_html = html_template.format(news_clusters="".join(clusters_html))
-
     # Write to file
     logging.info(f"Writing timeline HTML to {output_path}")
     with open(output_path, "w", encoding="utf-8") as f:

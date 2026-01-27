@@ -4,6 +4,7 @@ from pathlib import Path
 import dagster as dg
 from dotenv import load_dotenv
 from dagster_polars import PolarsParquetIOManager
+from defs.sensors.alerting import slack_on_run_failure
 
 # Get the current file's directory (where definitions.py is located)
 codelocation_root = Path(__file__).resolve().parent
@@ -32,6 +33,7 @@ defs = dg.Definitions.merge(
                 base_dir= str(data_dir)
             )
         },
+        sensors=[slack_on_run_failure],
     ),
     dg.load_from_defs_folder(project_root=codelocation_root),
 )

@@ -31,3 +31,11 @@ def news_agencies() -> DataFrame:
             .otherwise(pl.lit("unmeasured"))
         ),
     )
+
+@asset(
+    key_prefix="raw",
+)
+def agency_owners() -> DataFrame:
+    from utils.utils import DATA_DIR
+    import polars as pl
+    return pl.read_csv(DATA_DIR / "seeds/agency_owners.csv", try_parse_dates=True, separator=";")

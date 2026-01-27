@@ -89,4 +89,10 @@ def timeline(
         .join(total_reach, on="cluster_id", how="left")
     )
 
-    return merged
+    formatted = merged.with_columns(
+        max_published_date_fmt=pl.col("max_published_date").dt.to_string(
+            "%d-%m-%Y %H:%M"
+        )
+    )
+
+    return formatted
