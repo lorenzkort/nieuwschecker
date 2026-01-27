@@ -16,6 +16,23 @@ sentence-transformers = ">=5.2.0,<6"
 nbformat = ">=5.10.4,<6"
 
 [pypi-dependencies]
+# analyses
+trafilatura = ">=2.0.0, <3"
+newspaper3k = ">=0.2.8, <0.3"
+selenium = ">=4.39.0, <5"
+
+# own module
+defs = {path = "./codelocation", editable = true}
+
+# dagster
+dagster = ">=1.12.7, <2"
+dagster-webserver = ">=1.12.7, <2"
+dagster-docker = ">=0.28.7, <0.29"
+dagster-postgres = ">=0.28.7, <0.29"
+dagster-polars = ">=0.27.8, <0.28"
+dagster-slack = ">=0.28.12, <0.29"
+
+# processing
 feedparser = ">=6.0.12, <7"
 pathlib = ">=1.0.1, <2"
 ipykernel = ">=7.1.0, <8"
@@ -26,13 +43,7 @@ duckdb = ">=1.4.3, <2"
 plotly = ">=6.5.0, <7"
 streamlit = ">=1.52.2, <2"
 pandas = "*"
-dagster = ">=1.12.7, <2"
-dagster-webserver = ">=1.12.7, <2"
-dagster-docker = ">=0.28.7, <0.29"
-dagster-postgres = ">=0.28.7, <0.29"
-dagster-polars = ">=0.27.8, <0.28"
 
-defs = {path = "./codelocation", editable = true}
 types-psycopg2 = ">=2.9.21.20251012, <3"
 protobuf = ">=6.33.2, <7"
 spacy = "*"
