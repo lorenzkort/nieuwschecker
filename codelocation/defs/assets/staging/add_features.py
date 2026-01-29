@@ -117,16 +117,32 @@ def gen_features_batch(texts: List[str]) -> List[Dict[str, Any]]:
     key_prefix="staging",
     ins={
         "rss_feeds_historic": dg.AssetIn(["raw", "rss_feeds_historic"])
+    },
+    metadata={
+        "mode": "overwrite",
+        "delta_write_options": {
+            "schema_mode": "overwrite"
+        }
     }
 )
-def add_features(rss_feeds_historic: pl.DataFrame) -> pl.DataFrame:
-    full_text = rss_feeds_historic.select(["title", "summary"]).with_columns(
+def add_features(context: dg.AssetExecutionContext, rss_feeds_historic: pl.DataFrame) -> pl.DataFrame:
+    
+    # Get new articles to process
+    processed_rss_feeds = context.load_asset_value(
+            asset_key=dg.AssetKey(["staging", "add_features"])
+        )
+    new_articles = rss_feeds_historic.filter(
+        ~pl.col("link").is_in(processed_rss_feeds["link"])
+    )
+    logging.info(f'New articles to process for feature addition: {len(new_articles)}')
+    
+    full_text = new_articles.select(["title", "summary"]).with_columns(
         (pl.col("title") + ". " + pl.col("summary")).alias("full_text")
     ).get_column("full_text").to_list()
     
     features = gen_features_batch(full_text)
 
-    added_features = rss_feeds_historic.with_columns(
+    added_features = new_articles.with_columns(
         pl.Series("features", features)
     ).unnest("features").unnest("entities")
     
@@ -139,4 +155,4 @@ def add_features(rss_feeds_historic: pl.DataFrame) -> pl.DataFrame:
         )
     )
 
-    return added_missing_publish_date
+    return pl.concat([processed_rss_feeds, added_missing_publish_date])
