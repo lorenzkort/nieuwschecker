@@ -277,6 +277,12 @@ def cross_feed_clusters(
     articles_to_process = add_features.filter(
         pl.col("publish_date") >= lookback_date
     )
+    
+    # To avoid overlap of current and historic articles,
+    # filter historic clusters to those before the lookback date
+    historic_to_match = historic_cross_feed_clusters.filter(
+        pl.col("max_published_date") < lookback_date
+    )
     logging.info(f'Articles to process: {len(articles_to_process)}')
     
     
@@ -313,7 +319,7 @@ def cross_feed_clusters(
         )
         
     # combine historic and new clusters
-    return pl.concat([historic_cross_feed_clusters, cross_feed])
+    return pl.concat([historic_to_match, cross_feed]).unique(subset=["title", "max_published_date"])
 
 if __name__ == "__main__":
     import polars as pl
