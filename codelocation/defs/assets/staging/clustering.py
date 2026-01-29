@@ -1,5 +1,6 @@
 import dagster as dg
 import polars as pl
+from datetime import datetime, timedelta
 
 logging = dg.get_dagster_logger()
 
@@ -153,7 +154,7 @@ def two_stage_cluster(
     df: pl.DataFrame,
     stage1_threshold: float = 0.6,
     stage2_threshold: float = 0.85,
-    max_cluster_size: int = 10, #TODO change to nr. of feeds
+    max_cluster_size: int = 20, #TODO change to nr. of feeds
     max_time_window_hours: int | None = 24
 ) -> pl.DataFrame:
     """
@@ -234,9 +235,16 @@ def two_stage_cluster(
     key_prefix="staging",
     ins={
         "add_features": dg.AssetIn(["staging", "add_features"])   
+    },
+    metadata={
+        "mode": "overwrite",
+        "delta_write_options": {
+            "schema_mode": "overwrite"
+        }
     }
 )
 def cross_feed_clusters(
+    context: dg.AssetExecutionContext,
     add_features: pl.DataFrame,
 ) -> pl.DataFrame:
     """
@@ -256,12 +264,25 @@ def cross_feed_clusters(
     stage2_threshold: float = 0.85  # Refined event-specific clustering
     max_cluster_size: int = 10  # Trigger refinement above this size
     max_time_window_hours: int = 24  # Only cluster articles within 24 hours (applied to BOTH stages)
+    cluster_merge_lookback_days: int = 7  # Include last X days of articles to avoid missing clusters
     
     logging.info("Starting two-stage clustering pipeline")
     
+    # Determine articles to process
+    historic_cross_feed_clusters = context.load_asset_value(
+            asset_key=dg.AssetKey(["staging", "cross_feed_clusters"])
+        )
+    # Add the last x days of articles to avoid missing clusters
+    lookback_date = datetime.now() - timedelta(days=cluster_merge_lookback_days)
+    articles_to_process = add_features.filter(
+        pl.col("publish_date") >= lookback_date
+    )
+    logging.info(f'Articles to process: {len(articles_to_process)}')
+    
+    
     # Perform two-stage clustering
     all_clusters = two_stage_cluster(
-        add_features,
+        articles_to_process,
         stage1_threshold=stage1_threshold,
         stage2_threshold=stage2_threshold,
         max_cluster_size=max_cluster_size,
@@ -275,7 +296,7 @@ def cross_feed_clusters(
         f"Filtered to {cross_feed.height} cross-feed clusters "
         f"(from {all_clusters.height} total clusters)"
     )
-    
+
     # Add min and max publish dates as columns
     if cross_feed.height > 0:
         cross_feed = cross_feed.with_columns(
@@ -290,8 +311,9 @@ def cross_feed_clusters(
                 pl.col("max_published_date") - pl.col("min_published_date")
             ).dt.total_hours().round(1)
         )
-
-    return cross_feed
+        
+    # combine historic and new clusters
+    return pl.concat([historic_cross_feed_clusters, cross_feed])
 
 if __name__ == "__main__":
     import polars as pl
