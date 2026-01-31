@@ -12,7 +12,6 @@ logging = dg.get_dagster_logger()
     },
 )
 def create_publish_timeline_html(timeline: DataFrame, agency_owners: DataFrame) -> None:
-
     import polars as pl
     from utils.ftp_manager import StratoUploader
     from utils.utils import DATA_DIR
@@ -20,9 +19,12 @@ def create_publish_timeline_html(timeline: DataFrame, agency_owners: DataFrame) 
     output_path = DATA_DIR / "website" / "index.html"
     server_path = "nieuwschecker/"
 
-    df = timeline.filter(pl.col("num_feeds") > 8).sort(
-        "max_published_date", descending=True
-    )
+    df = timeline.filter(
+        (pl.col("num_feeds") > 8)
+        | (pl.col("blindspot_left") == 1)
+        | (pl.col("blindspot_right") == 1)
+        | (pl.col("single_owner_high_reach") == 1)
+    ).sort("max_published_date", descending=True)
 
     #!/usr/bin/env python3
     """
@@ -281,28 +283,30 @@ def create_publish_timeline_html(timeline: DataFrame, agency_owners: DataFrame) 
             )
 
         bias_bar_html = "".join(bias_segments)
-        
+
         # Generate ownership distribution - stacked bar like bias chart
         owners = row.get("owner_reach") or []
-        owners_sorted = sorted(owners, key=lambda o: o.get("total_reach", 0), reverse=True)
+        owners_sorted = sorted(
+            owners, key=lambda o: o.get("total_reach", 0), reverse=True
+        )
         total_reach = sum(o.get("total_reach", 0) for o in owners)
 
         owner_segments = []
 
         for o in owners_sorted:
             reach_percentage = (o.get("total_reach") / total_reach) * 100
-            
+
             # Only show owners with more than 15%
             if reach_percentage <= 10:
                 continue
-            
+
             owner = o.get("owner")
             color = agency_owners.filter(pl.col("owner") == owner)["color"].item(0)
-            
+
             # Show label with percentage, similar to bias chart
             perc_int = int(reach_percentage)
             label = f"{owner} {perc_int}%" if perc_int >= 1 else ""
-            
+
             owner_segments.append(
                 f'<div  class="bias-segment" style="width: {reach_percentage}%; background-color: {color}">{label}</div>'
             )

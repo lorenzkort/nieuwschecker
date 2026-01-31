@@ -89,10 +89,38 @@ def timeline(
         .join(total_reach, on="cluster_id", how="left")
     )
 
-    formatted = merged.with_columns(
+    # 7) Add Blind Spot columns
+    merged = merged.with_columns(
+        blindspot_left=pl.when(
+            pl.sum_horizontal("left", "centre left") < 0.2,
+            (pl.col("centre right") + pl.col("right")) > 0.8,
+        )
+        .then(1)
+        .otherwise(0),
+        blindspot_right=pl.when(
+            pl.sum_horizontal("right", "centre right") < 0.2,
+            pl.sum_horizontal("left", "centre left") > 0.3,
+            pl.col("num_articles") > 5,
+        )
+        .then(1)
+        .otherwise(0),
+    ).sort("max_published_date", descending=True)
+    
+    # 8) Add single owner column
+    merged = merged.with_columns(
+        single_owner_high_reach=pl.when(
+            (pl.col("owner_reach").list.len() == 1)
+            & (pl.col("num_articles") > 7)
+        )
+        .then(1)
+        .otherwise(0)
+    )
+
+    # Format date
+    merged = merged.with_columns(
         max_published_date_fmt=pl.col("max_published_date").dt.to_string(
             "%d-%m-%Y %H:%M"
         )
     )
 
-    return formatted
+    return merged
