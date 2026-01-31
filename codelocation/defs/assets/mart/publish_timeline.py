@@ -1,3 +1,5 @@
+from datetime import datetime
+
 import dagster as dg
 from polars import DataFrame
 
@@ -16,15 +18,26 @@ def create_publish_timeline_html(timeline: DataFrame, agency_owners: DataFrame) 
     from utils.ftp_manager import StratoUploader
     from utils.utils import DATA_DIR
 
+    cluster_publish_delay_hours = 5
+
     output_path = DATA_DIR / "website" / "index.html"
     server_path = "nieuwschecker/"
 
-    df = timeline.filter(
-        (pl.col("num_feeds") > 8)
-        | (pl.col("blindspot_left") == 1)
-        | (pl.col("blindspot_right") == 1)
-        | (pl.col("single_owner_high_reach") == 1)
-    ).sort("max_published_date", descending=True)
+    now = datetime.now()
+
+    df = (
+        timeline.filter( # show relevant clusters only
+            (pl.col("num_feeds") > 8)
+            | (pl.col("blindspot_left") == 1)
+            | (pl.col("blindspot_right") == 1)
+            | (pl.col("single_owner_high_reach") == 1)
+        )
+        .filter( # only show clusters older than delay
+            pl.col("max_published_date")
+            < (now - pl.duration(hours=cluster_publish_delay_hours))
+        )
+        .sort("max_published_date", descending=True)
+    )
 
     #!/usr/bin/env python3
     """

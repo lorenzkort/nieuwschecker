@@ -2,12 +2,11 @@
 authors = ["Lorenz Kort <lorenz.kort@gmail.com>"]
 channels = ["conda-forge"]
 name = "news-data"
-platforms = ["osx-arm64"]
+platforms = ['linux-64', 'linux-aarch64', 'osx-64', 'osx-arm64', 'win-64']
 version = "0.1.0"
 
 [tasks]
 postinstall = "spacy download nl_core_news_lg"
-db = "duckdb -ui -readonly data/prod.duckdb"
 
 [dependencies]
 python = ">=3.13.11,<3.14"
@@ -21,7 +20,7 @@ trafilatura = ">=2.0.0, <3"
 newspaper3k = ">=0.2.8, <0.3"
 selenium = ">=4.39.0, <5"
 
-# own module
+# Code Location Module
 defs = {path = "./codelocation", editable = true}
 
 # dagster
@@ -41,9 +40,7 @@ lxml = ">=6.0.2, <7"
 polars = ">=1.36.1, <2"
 duckdb = ">=1.4.3, <2"
 plotly = ">=6.5.0, <7"
-streamlit = ">=1.52.2, <2"
 pandas = "*"
-
 types-psycopg2 = ">=2.9.21.20251012, <3"
 protobuf = ">=6.33.2, <7"
 spacy = "*"

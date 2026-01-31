@@ -31,9 +31,15 @@ error.log
 
 # Dagster
 **/storage/*
-.nux/*
+.nux
 .temp*
+.tmp*
 .telemetry
+history
+lib
+logs
+schedules
+storage
 
 # Data
 data/*

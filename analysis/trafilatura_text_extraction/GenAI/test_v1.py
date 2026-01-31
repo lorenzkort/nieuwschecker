@@ -1,15 +1,3 @@
-#!/usr/bin/env python3
-"""
-Production-Ready Dutch News Article Scraper
-
-Clean, maintainable code following SOLID principles:
-- Single Responsibility: Each class has one clear purpose
-- Open/Closed: Easy to extend with new scrapers
-- Liskov Substitution: All scrapers implement same interface
-- Interface Segregation: Minimal, focused interfaces
-- Dependency Inversion: Depends on abstractions, not concrete implementations
-"""
-
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
 from typing import Optional, Dict, List
@@ -19,7 +7,6 @@ import json
 
 # Third-party imports
 import trafilatura
-import requests
 from bs4 import BeautifulSoup
 from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
@@ -428,7 +415,6 @@ def main():
         'Telegraaf': 'https://www.telegraaf.nl/binnenland/live-marokko-fans-in-amsterdam-geloven-nog-in-de-overwinning-in-afrika-cup/124602227.html',
         'BNR': 'https://www.bnr.nl/nieuws/internationaal/10591824/iraanse-oud-kroonprins-roept-op-bereid-je-voor-om-steden-in-te-nemen',
         'AD': "https://www.ad.nl/buitenland/witte-huis-sluit-inzet-leger-niet-uit-bij-verkrijgen-groenland-al-houdt-minister-het-op-kopen~a7975ae2/",
-        ''
     }
     
     print("Dutch News Scraper - Production Test")
