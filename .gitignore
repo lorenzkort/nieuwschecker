@@ -47,4 +47,4 @@ data/*
 
 # postgres
 dagster-postgres/
-storage-postgres/
+app_postgres/
