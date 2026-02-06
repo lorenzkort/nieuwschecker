@@ -1,5 +1,5 @@
 from datetime import datetime
-
+import os
 import dagster as dg
 from polars import DataFrame
 
@@ -17,8 +17,11 @@ def create_publish_timeline_html(timeline: DataFrame, agency_owners: DataFrame) 
     import polars as pl
     from utils.ftp_manager import StratoUploader
     from utils.utils import DATA_DIR
+    
+    cloudflare_site_token = os.environ.get("CLOUDFLARE_SITE_TOKEN")
 
     cluster_publish_delay_hours = 5
+    timeline_cutoff_days = 14
 
     output_path = DATA_DIR / "website" / "index.html"
     server_path = "nieuwschecker/"
@@ -26,15 +29,21 @@ def create_publish_timeline_html(timeline: DataFrame, agency_owners: DataFrame) 
     now = datetime.now()
 
     df = (
-        timeline.filter( # show relevant clusters only
+        timeline.filter(  # show relevant clusters only
             (pl.col("num_feeds") > 8)
             | (pl.col("blindspot_left") == 1)
             | (pl.col("blindspot_right") == 1)
             | (pl.col("single_owner_high_reach") == 1)
         )
-        .filter( # only show clusters older than delay
-            pl.col("max_published_date")
-            < (now - pl.duration(hours=cluster_publish_delay_hours))
+        .filter(  # only show clusters older than delay
+            (
+                pl.col("max_published_date")
+                < (now - pl.duration(hours=cluster_publish_delay_hours))
+            )
+            & (
+                pl.col("max_published_date")
+                > (now - pl.duration(days=timeline_cutoff_days))
+            )
         )
         .sort("max_published_date", descending=True)
     )
@@ -53,7 +62,7 @@ def create_publish_timeline_html(timeline: DataFrame, agency_owners: DataFrame) 
     <head>
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <title>News Timeline</title>
+        <title>Nieuws Checker (beta)</title>
         <style>
             * {{
                 margin: 0;
@@ -235,8 +244,9 @@ def create_publish_timeline_html(timeline: DataFrame, agency_owners: DataFrame) 
         </style>
     </head>
     <body>
+    <div><span>Nieuws Checker (beta)<br></br></span></div>
     {news_clusters}
-
+    <!-- Cloudflare Web Analytics --><script defer src='https://static.cloudflareinsights.com/beacon.min.js' data-cf-beacon='{{"token": {cloudflare_site_token} }}'></script><!-- End Cloudflare Web Analytics -->
     <script>
         // Add click handlers to all containers
         document.querySelectorAll('.container').forEach(container => {{
@@ -382,7 +392,7 @@ def create_publish_timeline_html(timeline: DataFrame, agency_owners: DataFrame) 
         clusters_html.append(cluster_html)
 
     # Generate final HTML
-    final_html = html_template.format(news_clusters="".join(clusters_html))
+    final_html = html_template.format(news_clusters="".join(clusters_html), cloudflare_site_token=cloudflare_site_token)
     # Write to file
     logging.info(f"Writing timeline HTML to {output_path}")
     with open(output_path, "w", encoding="utf-8") as f:
