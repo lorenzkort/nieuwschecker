@@ -1,0 +1,35 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model timeline {
+  cluster_id              Int       @id
+  title                   String?
+  articles                String?
+  num_articles            Int?
+  feeds                   String?
+  num_feeds               Int?
+  min_published_date      DateTime?
+  max_published_date      DateTime?
+  time_span_hours         Int?
+  missing_feeds           String?
+  owner_reach             String?
+  centre_right            Float?    @map("centre right")
+  centre                  Float?
+  centre_left             Float?    @map("centre left")
+  right                   Float?
+  left                    Float?
+  cluster_reach           Int?
+  blindspot_left          Int?
+  blindspot_right         Int?
+  single_owner_high_reach Int?
+  max_published_date_fmt  String?
+}
