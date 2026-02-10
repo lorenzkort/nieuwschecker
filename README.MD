@@ -1,5 +1,5 @@
-# Project Description
-Goal: Giving real-time insight into News Coverage Assymmetries
+# Nieuws Checker
+Giving real-time insight into Dutch News Coverage
 
 # Core data pipeline
 Location: `app/core`
