@@ -1,7 +1,11 @@
-from datetime import datetime
 import os
+from datetime import datetime
+
 import dagster as dg
+import polars as pl
 from polars import DataFrame
+from utils.ftp_manager import StratoUploader
+from utils.utils import DATA_DIR
 
 logging = dg.get_dagster_logger()
 
@@ -14,10 +18,6 @@ logging = dg.get_dagster_logger()
     },
 )
 def create_publish_timeline_html(timeline: DataFrame, agency_owners: DataFrame) -> None:
-    import polars as pl
-    from utils.ftp_manager import StratoUploader
-    from utils.utils import DATA_DIR
-    
     cloudflare_site_token = os.environ.get("CLOUDFLARE_SITE_TOKEN")
 
     cluster_publish_delay_hours = 5
@@ -31,8 +31,8 @@ def create_publish_timeline_html(timeline: DataFrame, agency_owners: DataFrame) 
     df = (
         timeline.filter(  # show relevant clusters only
             (pl.col("num_feeds") > 8)
-            | (pl.col("blindspot_left") == 1)
-            | (pl.col("blindspot_right") == 1)
+            # | (pl.col("blindspot_left") == 1)
+            # | (pl.col("blindspot_right") == 1)
             | (pl.col("single_owner_high_reach") == 1)
         )
         .filter(  # only show clusters older than delay
@@ -246,7 +246,7 @@ def create_publish_timeline_html(timeline: DataFrame, agency_owners: DataFrame) 
     <body>
     <div><span>Nieuws Checker (beta)<br></br></span></div>
     {news_clusters}
-    <!-- Cloudflare Web Analytics --><script defer src='https://static.cloudflareinsights.com/beacon.min.js' data-cf-beacon='{{"token": {cloudflare_site_token} }}'></script><!-- End Cloudflare Web Analytics -->
+    <!-- Cloudflare Web Analytics --><script defer src='https://static.cloudflareinsights.com/beacon.min.js' data-cf-beacon='{{"token": "{cloudflare_site_token}" }}'></script><!-- End Cloudflare Web Analytics -->
     <script>
         // Add click handlers to all containers
         document.querySelectorAll('.container').forEach(container => {{
@@ -392,7 +392,10 @@ def create_publish_timeline_html(timeline: DataFrame, agency_owners: DataFrame) 
         clusters_html.append(cluster_html)
 
     # Generate final HTML
-    final_html = html_template.format(news_clusters="".join(clusters_html), cloudflare_site_token=cloudflare_site_token)
+    final_html = html_template.format(
+        news_clusters="".join(clusters_html),
+        cloudflare_site_token=cloudflare_site_token,
+    )
     # Write to file
     logging.info(f"Writing timeline HTML to {output_path}")
     with open(output_path, "w", encoding="utf-8") as f:

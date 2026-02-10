@@ -317,7 +317,7 @@ def cross_feed_clusters(
             .list.min(),
             max_published_date=pl.col("articles")
             .list.eval(pl.element().struct.field("publish_date"))
-            .list.max(),
+            .list.max() + pl.duration(hours=cluster_merge_lookback_days) # Adjust for when clusters get published
         ).with_columns(
             time_span_hours=(
                 pl.col("max_published_date") - pl.col("min_published_date")

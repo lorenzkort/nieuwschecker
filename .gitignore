@@ -36,9 +36,8 @@ error.log
 .tmp*
 .telemetry
 history
-lib
 logs
-schedules
+schedules/
 storage
 
 # Data
