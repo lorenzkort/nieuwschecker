@@ -18,25 +18,7 @@ services:
       retries: 5
     ports:
       - "5330:5330"
-  app_postgres:
-    image: postgres:17
-    environment:
-      POSTGRES_USER: ${APP_POSTGRES_USER}
-      POSTGRES_PASSWORD: ${APP_POSTGRES_PASSWORD}
-      POSTGRES_DB: app
-    command: -p 5420
-    volumes:
-      - ./app_postgres/data:/var/lib/postgresql/data
-    networks:
-      - dagster_network
-    healthcheck:
-      test: ['CMD-SHELL', 'pg_isready -U dagster -d dagster']
-      interval: 10s
-      timeout: 8s
-      retries: 5
-    ports:
-      - "5420:5420"
-
+      
   # storage_postgres:
   #   image: postgres:17
   #   environment:
