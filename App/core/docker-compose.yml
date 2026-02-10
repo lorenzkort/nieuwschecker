@@ -3,8 +3,8 @@ services:
   dagster_postgres:
     image: postgres:17
     environment:
-      POSTGRES_USER: dagster
-      POSTGRES_PASSWORD: dagster
+      POSTGRES_USER: ${DAGSTER_POSTGRES_USER}
+      POSTGRES_PASSWORD: ${DAGSTER_POSTGRES_PASSWORD}
       POSTGRES_DB: dagster
     command: -p 5330
     volumes:
@@ -21,8 +21,8 @@ services:
   app_postgres:
     image: postgres:17
     environment:
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: postgres
+      POSTGRES_USER: ${APP_POSTGRES_USER}
+      POSTGRES_PASSWORD: ${APP_POSTGRES_PASSWORD}
       POSTGRES_DB: app
     command: -p 5420
     volumes:
@@ -45,7 +45,7 @@ services:
   #     POSTGRES_DB: storage
   #   command: -p 5440
   #   volumes:
-  #     - ./storage-postgres/data:/var/lib/postgresql/data
+  #     - ./app/core/storage-postgres/data:/var/lib/postgresql/data
   #   networks:
   #     - dagster_network
   #   healthcheck:

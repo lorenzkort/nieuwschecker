@@ -19,5 +19,5 @@ repos:
     -   id: detect-secrets
         entry: detect-secrets-hook
         stages: [pre-commit, manual]
-        args: ['--baseline', '.secrets.baseline']
+        args: ['--baseline', 'security/.secrets.baseline']
         exclude: ^\.secrets\.baseline$|package.lock.json|node_modules

@@ -7,6 +7,7 @@ version = "0.1.0"
 
 [tasks]
 postinstall = "spacy download nl_core_news_lg"
+secrets = "detect-secrets scan . --baseline ../../security/.secrets.baseline --exclude-files '.*\\.secrets.baseline$' --exclude-files '.*/\\.pixi/.*' --exclude-files '.*/var/log/.*' --exclude-files '.*/node_modules/.*'"
 
 [dependencies]
 python = ">=3.13.11,<3.14"
