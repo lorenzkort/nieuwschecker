@@ -1,8 +1,8 @@
 # Nieuws Checker
-Giving real-time insight into Dutch News Coverage
+Creating real-time insights into Dutch News Coverage
 
-# Core data pipeline
-Location: `app/core`
+# Core data pipelines
+Location: `app/core/README.MD`
 
 - Runtime: Python
 - Orchestration: Dagster
@@ -10,6 +10,6 @@ Location: `app/core`
 - Storage: .parquet-files for dev
 
 # Front-end
-Location: `app/frontend`
+Location: `app/frontend/README.md`
 
 Next.js Application with Prisma and Tailwind CSS
