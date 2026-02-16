@@ -265,11 +265,11 @@ def cross_feed_clusters(
     min_feeds: int = 2
 
     # Two-stage clustering parameters
-    stage1_threshold: float = 0.8  # Broad topical grouping
-    stage2_threshold: float = 0.85  # Refined event-specific clustering
-    max_cluster_size: int = 10  # Trigger refinement above this size
+    stage1_threshold: float = 0.75  # Broad topical grouping
+    stage2_threshold: float = 0.80  # Refined event-specific clustering
+    max_cluster_size: int = 20  # Trigger refinement above this size
     max_time_window_hours: int = (
-        24  # Only cluster articles within 24 hours (applied to BOTH stages)
+        48  # Only cluster articles within 24 hours (applied to BOTH stages)
     )
     cluster_merge_lookback_days: int = (
         7  # Include last X days of articles to avoid missing clusters
@@ -336,10 +336,14 @@ def cross_feed_clusters(
 
 
 if __name__ == "__main__":
+    from datetime import datetime
+
     import polars as pl
 
+    now = datetime.now()
+
     df = pl.read_parquet(
-        "/Users/lorenzkort/Documents/LocalCode/news-data/data/staging/add_features.parquet"
-    )
-    clusters = cluster_articles(df)
-    test_cluster = clusters.filter(pl.col("title").str.contains("Maduro"))
+        "/Users/lorenzkort/Documents/LocalCode/news-data/app/core/data/staging/add_features.parquet"
+    ).filter(pl.col("publish_date") > (now - pl.duration(days=2)))
+    clusters = cross_feed_clusters(context=None, add_features=df)
+    test_cluster = clusters.filter(pl.col("title").str.contains("griep"))
