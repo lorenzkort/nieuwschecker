@@ -66,8 +66,6 @@ def rss_to_df(feed_url: str) -> pl.DataFrame:
     except Exception as e:
         logging.warning(f'Could not ingest RSS-feed from "{feed_url}": {e}')
         return pl.DataFrame()
-    finally:
-        return pl.DataFrame()
 
 
 @dg.asset(key_prefix="raw")
