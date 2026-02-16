@@ -55,13 +55,19 @@ def parse_article(article: Dict[str, Any]) -> Dict[str, Any]:
 def rss_to_df(feed_url: str) -> pl.DataFrame:
     """Fetch RSS feed, parse articles, and return a Polars DataFrame."""
     logging.info(f"parsing {feed_url}")
-    feed = ingest_rss_to_text(feed_url)
-    rows: List[Dict[str, Any]] = []
+    try:
+        feed = ingest_rss_to_text(feed_url)
+        rows: List[Dict[str, Any]] = []
 
-    entries = feed.get("entries") or []
-    rows = [parse_article(article) for article in entries]
+        entries = feed.get("entries") or []
+        rows = [parse_article(article) for article in entries]
 
-    return pl.DataFrame(rows)
+        return pl.DataFrame(rows)
+    except Exception as e:
+        logging.warning(f'Could not ingest RSS-feed from "{feed_url}": {e}')
+        return pl.DataFrame()
+    finally:
+        return pl.DataFrame()
 
 
 @dg.asset(key_prefix="raw")
