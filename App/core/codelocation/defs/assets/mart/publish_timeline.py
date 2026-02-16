@@ -244,7 +244,7 @@ def create_publish_timeline_html(timeline: DataFrame, agency_owners: DataFrame) 
         </style>
     </head>
     <body>
-    <div><span>Nieuws Checker (beta) - lorenz.kort@gmail.com<br></br></span></div>
+    <div><span>Nieuws Checker (beta) - lorenz.kort@gmail.com - https://github.com/lorenzkort/nieuwschecker<br></br></span></div>
     {news_clusters}
     <!-- Cloudflare Web Analytics --><script defer src='https://static.cloudflareinsights.com/beacon.min.js' data-cf-beacon='{{"token": "{cloudflare_site_token}" }}'></script><!-- End Cloudflare Web Analytics -->
     <script>
