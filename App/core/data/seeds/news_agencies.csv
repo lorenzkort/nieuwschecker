@@ -1,20 +1,20 @@
-url;owner;reach;reach_updated;rss_available;left_right;left_right_validated
-nos.nl;NPO;4740000;2025-11-30;1;0.346;1
-www.ad.nl;DPG Media;5337000;2025-11-30;1;0.366;1
-www.nu.nl;DPG Media;4623000;2025-11-30;1;0.355;1
-www.volkskrant.nl;DPG Media;2029000;2025-11-30;1;-0.349;1
-www.nrc.nl;Mediahuis NL;2392000;2025-11-30;1;-0.45;0
-www.trouw.nl;DPG Media;1295000;2025-11-30;1;-0.45;0
-www.rtl.nl;DPG Media;5675000;2025-11-30;0;0.674;1
-www.parool.nl;DPG Media;1168000;2025-11-30;1;0.1;0
-www.nd.nl;Nedag Uitgevers BV;26200;2024-12-31;1;0.0;0
-www.telegraaf.nl;Mediahuis NL;4399000;2025-11-30;1;1.056;1
-www.gelderlander.nl;DPG Media;2691000;2025-11-30;1;0.1;0
-www.destentor.nl;DPG Media;1975000;2025-11-30;1;0.1;0
-www.bd.nl;DPG Media;1641000;2025-11-30;1;0.1;0
-www.metronieuws.nl;Mediahuis NL;1475000;2025-11-30;0;0.4;0
-www.ed.nl;DPG Media;1398000;2025-11-30;1;0.1;0
-www.bnr.nl;FD Mediagroep;1138000;2025-11-30;1;0.45;0
-fd.nl;FD Mediagroep;229000;;1;0.4;0
-www.geenstijl.nl;Marck Burema, Bart Nijman, Diane Beijer;;;0;0.88;1
-www.bnnvara.nl;NPO;;;0;-0.268;1
+url;owner;type;reach;reach_updated;rss_available;left_right;left_right_validated
+nos.nl;NPO;state;4740000;2025-11-30;1;0.346;1
+www.ad.nl;DPG Media;commercial;5337000;2025-11-30;1;0.366;1
+www.nu.nl;DPG Media;commercial;4623000;2025-11-30;1;0.355;1
+www.volkskrant.nl;DPG Media;commercial;2029000;2025-11-30;1;-0.349;1
+www.nrc.nl;Mediahuis NL;independent;2392000;2025-11-30;1;-0.45;0
+www.trouw.nl;DPG Media;commercial;1295000;2025-11-30;1;-0.45;0
+www.rtl.nl;DPG Media;commercial;5675000;2025-11-30;0;0.674;1
+www.parool.nl;DPG Media;commercial;1168000;2025-11-30;1;0.1;0
+www.nd.nl;Nedag Uitgevers BV;independent;26200;2024-12-31;1;0.0;0
+www.telegraaf.nl;Mediahuis NL;commercial;4399000;2025-11-30;1;1.056;1
+www.gelderlander.nl;DPG Media;commercial;2691000;2025-11-30;1;0.1;0
+www.destentor.nl;DPG Media;commercial;1975000;2025-11-30;1;0.1;0
+www.bd.nl;DPG Media;commercial;1641000;2025-11-30;1;0.1;0
+www.metronieuws.nl;Mediahuis NL;commercial;1475000;2025-11-30;0;0.4;0
+www.ed.nl;DPG Media;commercial;1398000;2025-11-30;1;0.1;0
+www.bnr.nl;FD Mediagroep;commercial;1138000;2025-11-30;1;0.45;0
+fd.nl;FD Mediagroep;commercial;229000;;1;0.4;0
+www.geenstijl.nl;Marck Burema, Bart Nijman, Diane Beijer;commercial;;;0;0.88;1
+www.bnnvara.nl;NPO;state;1000000;;0;-0.268;1
