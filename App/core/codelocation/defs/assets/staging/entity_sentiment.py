@@ -6,8 +6,11 @@ It uses the RobBERT-v2 model (Dutch BERT) to determine whether an entity
 is portrayed positively or negatively.
 """
 
+import json
+import re
+
 import dagster as dg
-from polars import DataFrame
+import polars as pl
 from transformers import pipeline
 
 logging = dg.get_dagster_logger()
@@ -16,7 +19,7 @@ logging = dg.get_dagster_logger()
 _sentiment_pipeline = None
 
 
-def get_sentiment_pipeline(
+def _get_sentiment_pipeline(
     model_name: str = "DTAI-KULeuven/robbert-v2-dutch-sentiment",
 ):
     """
@@ -31,7 +34,7 @@ def get_sentiment_pipeline(
     return _sentiment_pipeline
 
 
-def extract_entity_context(
+def _extract_entity_context(
     text: str, entity: str, min_context_chars: int = 100
 ) -> list:
     """
@@ -48,7 +51,6 @@ def extract_entity_context(
     Returns:
         List of context strings containing the entity
     """
-    import re
 
     contexts = []
     # Convert both to lowercase for case-insensitive matching
@@ -95,9 +97,9 @@ def extract_entity_context(
     return contexts
 
 
-def analyse_entity_sentiment(
+def _analyse_entity_sentiment(
     text: str, entity: str, model_name: str = "DTAI-KULeuven/robbert-v2-dutch-sentiment"
-):
+) -> str:
     """
     Analyse sentiment towards a specific entity in text.
 
@@ -109,13 +111,12 @@ def analyse_entity_sentiment(
     Returns:
         Dictionary with sentiment scores and analysis
     """
-    import json
 
     # Get the sentiment pipeline (will reuse existing one)
-    sentiment_pipeline = get_sentiment_pipeline(model_name)
+    sentiment_pipeline = _get_sentiment_pipeline(model_name)
 
     # Extract contexts where entity is mentioned
-    contexts = extract_entity_context(text, entity)
+    contexts = _extract_entity_context(text, entity)
 
     if not contexts:
         return json.dumps(
@@ -158,7 +159,7 @@ def analyse_entity_sentiment(
     )
 
 
-def process_entity_sentiments(title: str, summary: str, keywords: list) -> list[str]:
+def _process_entity_sentiments(title: str, summary: str, keywords: list) -> list[str]:
     """
     Convert a list of entities into a dictionary with sentiment scores.
     Uses title + summary as the text input for sentiment analysis.
@@ -169,7 +170,7 @@ def process_entity_sentiments(title: str, summary: str, keywords: list) -> list[
     logging.info(f"processing {keywords}")
 
     text = f"{title}. {summary}"
-    result = [analyse_entity_sentiment(text, keyword) for keyword in keywords]
+    result = [_analyse_entity_sentiment(text, keyword) for keyword in keywords]
     return result
 
 
@@ -179,16 +180,15 @@ def process_entity_sentiments(title: str, summary: str, keywords: list) -> list[
     metadata={"mode": "overwrite", "delta_write_options": {"schema_mode": "overwrite"}},
 )
 def entity_sentiments(
-    context: dg.AssetExecutionContext, add_features: DataFrame
-) -> DataFrame:
-    import polars as pl
+    context: dg.AssetExecutionContext, add_features: pl.DataFrame
+) -> pl.DataFrame:
 
     historic_entity_sentiments = context.load_asset_value(
         asset_key=dg.AssetKey(["staging", "entity_sentiments"])
     )
 
     # Only process new rows who have not been processed before
-    processed_entity_sentiments = DataFrame()
+    processed_entity_sentiments = pl.DataFrame()
     sentiment_cols = ["PERSON", "ORG", "GPE", "LOC", "EVENT"]
     articles_to_process = add_features.filter(
         ~pl.col("link").is_in(
@@ -196,11 +196,11 @@ def entity_sentiments(
         )  # gets all new articles
     )
     logging.info(f"Articles to process: {len(articles_to_process)}")
-    get_sentiment_pipeline()  # Loading LLM model
+    _get_sentiment_pipeline()  # Loading language model
     exprs = [
         pl.struct(["title", "summary", col])
         .map_elements(
-            lambda row, c=col: process_entity_sentiments(
+            lambda row, c=col: _process_entity_sentiments(
                 row["title"], row["summary"], row[c]
             ),
             return_dtype=pl.List(pl.List(pl.String)),
@@ -221,8 +221,7 @@ def entity_sentiments(
     key_prefix="staging",
     ins={"entity_sentiments": dg.AssetIn(["staging", "entity_sentiments"])},
 )
-def sentiments(entity_sentiments: DataFrame) -> DataFrame:
-    import polars as pl
+def sentiments(entity_sentiments: pl.DataFrame) -> pl.DataFrame:
 
     results_field_type = pl.List(
         pl.Struct(
@@ -269,8 +268,7 @@ def sentiments(entity_sentiments: DataFrame) -> DataFrame:
 @dg.asset(
     key_prefix="staging", ins={"sentiments": dg.AssetIn(["staging", "sentiments"])}
 )
-def sentiments_per_entity(sentiments: DataFrame) -> DataFrame:
-    import polars as pl
+def sentiments_per_entity(sentiments: pl.DataFrame) -> pl.DataFrame:
 
     return (
         sentiments.group_by(["entity"])
