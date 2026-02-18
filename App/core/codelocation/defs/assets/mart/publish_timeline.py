@@ -10,14 +10,87 @@ from utils.utils import DATA_DIR
 logging = dg.get_dagster_logger()
 
 
+def _df_to_html_table(df: pl.DataFrame) -> str:
+    headers = "".join(f"<th>{c}</th>" for c in df.columns)
+
+    rows = ""
+    for row in df.iter_rows():
+        cells = "".join(f"<td>{cell}</td>" for cell in row)
+        rows += f"<tr>{cells}</tr>"
+
+    return f"""
+        <table class="popup-table">
+            <thead>
+                <tr>{headers}</tr>
+            </thead>
+            <tbody>
+                {rows}
+            </tbody>
+        </table>
+    """
+
+
+def _reach_bar_color(left_right: float) -> str:
+    if left_right <= -0.3:
+        return "#2563EB"  # left
+    elif left_right <= 0.15:
+        return "#6B7280"  # centre
+    elif left_right <= 0.5:
+        return "#B06048"  # centre-right
+    else:
+        return "#DC2626"  # right
+
+
+def _format_reach(reach: int) -> str:
+    if reach >= 1_000_000:
+        return f"{reach / 1_000_000:.1f}M"
+    elif reach >= 1_000:
+        return f"{reach / 1_000:.0f}K"
+    return str(reach)
+
+
+def _df_to_reach_bars(df: pl.DataFrame) -> str:
+    """Generate a distribution strip chart: agencies plotted on a left–right axis, bar height = reach."""
+    if df.is_empty():
+        return "<p class='dist-empty'>Geen data beschikbaar</p>"
+
+    max_reach_raw = df["Bereik"].max()
+    max_reach: float = float(max_reach_raw) if max_reach_raw else 1.0
+
+    sorted_df = df.sort("Links (-) Rechts (+)")
+    rows = []
+    for row in sorted_df.iter_rows(named=True):
+        reach = int(row["Bereik"] or 0)
+        lr = float(row["Links (-) Rechts (+)"] or 0)
+        # Map lr from [-1, 1] to [0%, 100%] position on spectrum
+        pos_pct = ((lr + 1) / 2) * 100
+        # Bar width proportional to reach (min 4%, max 60%)
+        bar_w = max(4, min(60, int((reach / max_reach) * 60)))
+        color = _reach_bar_color(lr)
+        rows.append(
+            f"""
+            <div class="dist-row">
+                <div class="dist-label">{row["Medium"]}</div>
+                <div class="dist-track">
+                    <div class="dist-marker" style="left:{pos_pct:.1f}%;width:{bar_w:.0f}px;background:{color};" title="{row['Medium']} — {_format_reach(reach)}"></div>
+                </div>
+                <div class="dist-reach">{_format_reach(reach)}</div>
+            </div>"""
+        )
+    return "".join(rows)
+
+
 @dg.asset(
     key_prefix="mart",
     ins={
         "timeline": dg.AssetIn(["staging", "timeline"]),
         "agency_owners": dg.AssetIn(["raw", "agency_owners"]),
+        "news_agencies": dg.AssetIn(["raw", "news_agencies"]),
     },
 )
-def create_publish_timeline_html(timeline: DataFrame, agency_owners: DataFrame) -> None:
+def create_publish_timeline_html(
+    timeline: DataFrame, agency_owners: DataFrame, news_agencies: DataFrame
+) -> None:
     cloudflare_site_token = os.environ.get("CLOUDFLARE_SITE_TOKEN")
 
     cluster_publish_delay_hours = 5
@@ -30,10 +103,13 @@ def create_publish_timeline_html(timeline: DataFrame, agency_owners: DataFrame) 
 
     df = (
         timeline.filter(  # show relevant clusters only
-            (pl.col("num_feeds") > 8)
-            # | (pl.col("blindspot_left") == 1)
-            # | (pl.col("blindspot_right") == 1)
-            # | (pl.col("single_owner_high_reach") == 1)
+            (
+                pl.col("num_feeds")
+                > 8
+                # | (pl.col("blindspot_left") == 1)
+                # | (pl.col("blindspot_right") == 1)
+                # | (pl.col("single_owner_high_reach") == 1)
+            )
         )
         .filter(  # only show clusters older than delay
             (
@@ -48,7 +124,16 @@ def create_publish_timeline_html(timeline: DataFrame, agency_owners: DataFrame) 
         .sort("max_published_date", descending=True)
     )
 
-    #!/usr/bin/env python3
+    media_lookup = (
+        news_agencies.filter(pl.col("rss_available") == 1)
+        .with_columns(
+            pl.col("url").alias("Medium"),
+            pl.col("reach").alias("Bereik"),
+            pl.col("left_right").alias("Links (-) Rechts (+)"),
+        )
+        .select(["Medium", "Bereik", "Links (-) Rechts (+)"])
+    )
+
     """
     Ground News Style Timeline POC
     Displays news articles in a mobile-friendly timeline format
@@ -58,217 +143,467 @@ def create_publish_timeline_html(timeline: DataFrame, agency_owners: DataFrame) 
 
     # HTML Template
     html_template = """<!DOCTYPE html>
-    <html lang="en">
+    <html lang="nl">
     <head>
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <title>Nieuws Checker (beta)</title>
+        <title>Nieuws Checker</title>
+        <meta name="description" content="Nieuws Checker — onafhankelijk overzicht van het Nederlandse medialandschap">
+        <link rel="preconnect" href="https://fonts.googleapis.com">
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
         <style>
-            * {{
+            :root {{
+                --color-bg-primary:        #F5F0E8;
+                --color-bg-secondary:      #EDEDE5;
+                --color-bg-inverse:        #111111;
+                --color-text-primary:      #1A1A1A;
+                --color-text-secondary:    #5A5A5A;
+                --color-text-inverse:      #F5F0E8;
+                --color-border:            #D0C9BA;
+                --color-border-strong:     #8A8070;
+                --color-accent:            #C8391A;
+
+                --color-bias-left:         #2563EB;
+                --color-bias-center:       #6B7280;
+                --color-bias-right:        #DC2626;
+                --color-bias-center-left:  #4B82D4;
+                --color-bias-center-right: #B55A3A;
+
+                --font-body: 'Inter', system-ui, -apple-system, sans-serif;
+                --font-mono: 'JetBrains Mono', 'Fira Code', monospace;
+            }}
+
+            *, *::before, *::after {{
                 margin: 0;
                 padding: 0;
                 box-sizing: border-box;
             }}
-            
+
             body {{
-                font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
-                background-color: #f5f5f5;
-                padding: 12px;
-                line-height: 1.4;
-                max-width: 430px;
-                margin: 0 auto;
-            }}
-            
-            .container {{
-                background-color: white;
-                border-radius: 8px;
-                box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-                overflow: hidden;
-                margin-bottom: 12px;
-                cursor: pointer;
-                transition: transform 0.2s, box-shadow 0.2s;
-            }}
-            
-            .container:active {{
-                transform: scale(0.98);
-            }}
-            
-            .header {{
-                padding: 14px;
-                border-bottom: 1px solid #e5e5e5;
-            }}
-            
-            .cluster-title {{
+                font-family: var(--font-body);
+                background-color: var(--color-bg-primary);
+                color: var(--color-text-primary);
+                line-height: 1.6;
                 font-size: 16px;
-                font-weight: 600;
-                color: #1a1a1a;
-                margin-bottom: 8px;
+                -webkit-font-smoothing: antialiased;
+                -moz-osx-font-smoothing: grayscale;
+            }}
+
+            .site-header {{
+                position: sticky;
+                top: 0;
+                z-index: 100;
+                height: 56px;
+                background: var(--color-bg-primary);
+                border-bottom: 1px solid var(--color-border-strong);
+                display: flex;
+                align-items: center;
+                padding: 0 24px;
+            }}
+
+            .site-header h1 {{
+                font-family: var(--font-body);
+                font-size: 14px;
+                font-weight: 700;
+                letter-spacing: 0.08em;
+                text-transform: uppercase;
+                color: var(--color-text-primary);
+            }}
+
+            .site-header .header-meta {{
+                margin-left: auto;
+                font-size: 12px;
+                font-weight: 500;
+                color: var(--color-text-secondary);
+                letter-spacing: 0.04em;
+            }}
+
+            .site-header .header-meta a {{
+                color: var(--color-text-secondary);
+                text-decoration: none;
+            }}
+
+            .site-header .header-meta a:hover {{
+                color: var(--color-text-primary);
+            }}
+
+            .content-area {{
+                max-width: 720px;
+                margin: 0 auto;
+                padding: 16px 24px;
+            }}
+
+            /* ── Cluster card ── */
+            .container {{
+                background: var(--color-bg-primary);
+                border: 1px solid var(--color-border);
+                border-radius: 0;
+                overflow: hidden;
+                margin-bottom: -1px;
+            }}
+
+            .header {{
+                padding: 14px 16px 12px;
+                border-bottom: 1px solid var(--color-border);
+            }}
+
+            .cluster-title {{
+                font-size: 20px;
+                font-weight: 700;
+                color: var(--color-text-primary);
+                letter-spacing: -0.02em;
+                margin-bottom: 6px;
                 line-height: 1.3;
             }}
-            
+
             .metadata {{
                 display: flex;
-                gap: 12px;
-                font-size: 12px;
-                color: #666;
+                gap: 16px;
             }}
-            
+
             .metadata-item {{
                 display: flex;
                 align-items: center;
                 gap: 4px;
+                font-size: 12px;
+                font-weight: 500;
+                text-transform: uppercase;
+                letter-spacing: 0.08em;
+                color: var(--color-text-secondary);
             }}
-            
+
+            .metadata-item .sep {{
+                margin: 0 2px;
+                color: var(--color-border-strong);
+            }}
+
+            /* ── Bias bar ── */
             .bias-section {{
-                padding: 12px 14px;
+                padding: 10px 16px;
+                border-bottom: 1px solid var(--color-border);
             }}
-            
+
+            .bias-label {{
+                font-size: 12px;
+                font-weight: 500;
+                text-transform: uppercase;
+                letter-spacing: 0.08em;
+                color: var(--color-text-secondary);
+                margin-bottom: 6px;
+            }}
+
             .bias-bar-container {{
-                height: 24px;
-                background-color: #f0f0f0;
-                border-radius: 4px;
+                height: 14px;
+                background-color: var(--color-bg-secondary);
+                border-radius: 0;
                 overflow: hidden;
                 display: flex;
+                cursor: pointer;
             }}
-            
+
             .bias-segment {{
                 height: 100%;
-                transition: all 0.3s ease;
-                display: flex;
-                align-items: center;
-                justify-content: center;
-                font-size: 10px;
-                font-weight: 600;
-                color: white;
-                text-shadow: 0 1px 2px rgba(0,0,0,0.2);
             }}
-            
+
             .bias-left {{
-                background-color: #4A90E2;
+                background-color: var(--color-bias-left);
             }}
-            
+
             .bias-centre-left {{
-                background-color: #7FB3E8;
+                background-color: var(--color-bias-center-left);
             }}
-            
+
             .bias-centre {{
-                background-color: #9CA3AF;
+                background-color: var(--color-bias-center);
             }}
-            
+
             .bias-centre-right {{
-                background-color: #E89B7F;
+                background-color: var(--color-bias-center-right);
             }}
-            
+
             .bias-right {{
-                background-color: #E24A4A;
+                background-color: var(--color-bias-right);
             }}
-        
+
+            .bias-legend {{
+                display: flex;
+                justify-content: space-between;
+                margin-top: 4px;
+                font-size: 12px;
+                font-weight: 500;
+                letter-spacing: 0.08em;
+                text-transform: uppercase;
+                color: var(--color-text-secondary);
+            }}
+
+            /* ── Expand / collapse ── */
+            .expand-indicator {{
+                text-align: center;
+                padding: 8px 16px;
+                font-size: 12px;
+                font-weight: 500;
+                text-transform: uppercase;
+                letter-spacing: 0.08em;
+                color: var(--color-text-secondary);
+                border-top: 1px solid var(--color-border);
+                cursor: pointer;
+                user-select: none;
+                transition: color 0.15s;
+            }}
+
+            .expand-indicator:hover {{
+                color: var(--color-text-primary);
+            }}
+
+            .expand-indicator::after {{
+                content: ' ↓';
+                font-size: 12px;
+            }}
+
+            .container.expanded .expand-indicator::after {{
+                content: ' ↑';
+            }}
+
+            /* ── Articles section ── */
             .articles-section {{
                 max-height: 0;
                 overflow: hidden;
                 transition: max-height 0.3s ease-out;
             }}
-            
+
             .articles-section.expanded {{
-                max-height: 2000px;
+                max-height: 3000px;
                 transition: max-height 0.5s ease-in;
             }}
-            
+
             .articles-inner {{
-                padding: 14px;
-                border-top: 1px solid #e5e5e5;
+                padding: 12px 16px;
+                border-top: 1px solid var(--color-border);
             }}
-            
+
             .section-title {{
-                font-size: 11px;
-                font-weight: 600;
-                color: #666;
+                font-size: 12px;
+                font-weight: 500;
+                color: var(--color-text-secondary);
                 text-transform: uppercase;
-                letter-spacing: 0.5px;
-                margin-bottom: 10px;
+                letter-spacing: 0.08em;
+                margin-bottom: 8px;
             }}
-            
+
             .article-item {{
-                padding: 8px 0;
-                border-bottom: 1px solid #f0f0f0;
+                padding: 6px 0;
+                border-bottom: 1px solid var(--color-border);
             }}
-            
+
             .article-item:last-child {{
                 border-bottom: none;
             }}
-            
+
             .article-link {{
-                color: #4A90E2;
+                color: var(--color-text-primary);
                 text-decoration: none;
-                font-size: 13px;
+                font-size: 14px;
                 font-weight: 500;
                 display: block;
-                margin-bottom: 3px;
-                line-height: 1.3;
+                margin-bottom: 2px;
+                line-height: 1.4;
             }}
-            
+
             .article-link:hover {{
                 text-decoration: underline;
+                text-decoration-color: var(--color-border-strong);
+                text-underline-offset: 2px;
             }}
-            
+
             .article-meta {{
-                font-size: 11px;
-                color: #999;
+                font-size: 12px;
+                font-weight: 500;
+                color: var(--color-text-secondary);
+                letter-spacing: 0.04em;
             }}
-            
-            .reach-info {{
-                font-size: 11px;
-                color: #666;
-                padding: 8px 14px;
-                background-color: #f9f9f9;
-                border-top: 1px solid #e5e5e5;
+
+            /* ── Popup / reach chart ── */
+            .media-popup {{
+                display: none;
+                position: fixed;
+                inset: 0;
+                background: rgba(17, 17, 17, 0.6);
+                justify-content: center;
+                align-items: center;
+                z-index: 1000;
             }}
-            
-            .expand-indicator {{
+
+            .media-popup-content {{
+                background: var(--color-bg-primary);
+                border: 1px solid var(--color-border-strong);
+                border-radius: 0;
+                padding: 20px;
+                max-height: 80vh;
+                overflow-y: auto;
+                width: calc(100vw - 32px);
+                max-width: 500px;
+            }}
+
+            .popup-title {{
+                font-size: 12px;
+                font-weight: 500;
+                text-transform: uppercase;
+                letter-spacing: 0.08em;
+                color: var(--color-text-secondary);
+                margin-bottom: 12px;
+            }}
+
+            .close-btn {{
+                float: right;
+                font-size: 20px;
+                cursor: pointer;
+                color: var(--color-text-secondary);
+                line-height: 1;
+            }}
+
+            .close-btn:hover {{
+                color: var(--color-text-primary);
+            }}
+
+            /* ── Distribution chart ── */
+            .dist-row {{
+                display: flex;
+                align-items: center;
+                gap: 8px;
+                margin-bottom: 2px;
+                padding: 3px 0;
+                border-bottom: 1px solid var(--color-border);
+            }}
+
+            .dist-row:last-child {{
+                border-bottom: none;
+            }}
+
+            .dist-label {{
+                font-size: 12px;
+                font-weight: 500;
+                color: var(--color-text-primary);
+                min-width: 110px;
+                flex-shrink: 0;
+                white-space: nowrap;
+                overflow: hidden;
+                text-overflow: ellipsis;
+            }}
+
+            .dist-track {{
+                flex: 1;
+                height: 10px;
+                position: relative;
+                background: var(--color-bg-secondary);
+                border-radius: 0;
+            }}
+
+            .dist-marker {{
+                position: absolute;
+                top: 0;
+                height: 100%;
+                border-radius: 0;
+                transform: translateX(-50%);
+            }}
+
+            .dist-reach {{
+                font-family: var(--font-mono);
+                font-size: 12px;
+                color: var(--color-text-secondary);
+                min-width: 40px;
+                text-align: right;
+                flex-shrink: 0;
+            }}
+
+            .dist-empty {{
+                font-size: 12px;
+                color: var(--color-text-secondary);
+                padding: 8px 0;
+            }}
+
+            .dist-axis {{
+                display: flex;
+                justify-content: space-between;
+                font-size: 12px;
+                font-weight: 500;
+                letter-spacing: 0.08em;
+                text-transform: uppercase;
+                color: var(--color-text-secondary);
+                padding: 4px 0 0;
+                margin-left: 118px;
+                margin-right: 48px;
+            }}
+
+            /* ── Footer ── */
+            .site-footer {{
+                max-width: 720px;
+                margin: 24px auto 0;
+                padding: 12px 24px;
+                border-top: 1px solid var(--color-border-strong);
+                font-size: 12px;
+                font-weight: 500;
+                text-transform: uppercase;
+                letter-spacing: 0.08em;
+                color: var(--color-text-secondary);
                 text-align: center;
-                padding: 8px;
-                font-size: 11px;
-                color: #4A90E2;
-                border-top: 1px solid #e5e5e5;
             }}
-            
-            .expand-indicator::after {{
-                content: '▼';
-                margin-left: 4px;
-                font-size: 9px;
+
+            .site-footer a {{
+                color: var(--color-text-secondary);
+                text-decoration: none;
             }}
-            
-            .container.expanded .expand-indicator::after {{
-                content: '▲';
+
+            .site-footer a:hover {{
+                color: var(--color-text-primary);
+            }}
+
+            /* ── Mobile ── */
+            @media (max-width: 480px) {{
+                .content-area {{
+                    padding: 12px 12px;
+                }}
+                .site-header {{
+                    padding: 0 12px;
+                }}
+                .metadata {{
+                    flex-wrap: wrap;
+                    gap: 8px;
+                }}
+                .cluster-title {{
+                    font-size: 16px;
+                }}
             }}
         </style>
     </head>
     <body>
-    <div><span>Nieuws Checker (beta) - lorenz.kort@gmail.com - https://github.com/lorenzkort/nieuwschecker<br></br></span></div>
+    <header class="site-header">
+        <h1>Nieuws Checker</h1>
+        <span class="header-meta"><a href="https://github.com/lorenzkort/nieuwschecker" target="_blank" rel="noopener">github</a></span>
+    </header>
+    <div class="content-area">
     {news_clusters}
+    </div>
+    <footer class="site-footer">Nieuws Checker &middot; Beta &middot; <a href="https://github.com/lorenzkort/nieuwschecker" target="_blank" rel="noopener">broncode</a></footer>
     <!-- Cloudflare Web Analytics --><script defer src='https://static.cloudflareinsights.com/beacon.min.js' data-cf-beacon='{{"token": "{cloudflare_site_token}" }}'></script><!-- End Cloudflare Web Analytics -->
     <script>
-        // Add click handlers to all containers
-        document.querySelectorAll('.container').forEach(container => {{
-            container.addEventListener('click', (e) => {{
-                // Prevent expansion if clicking on a link
-                if (e.target.tagName === 'A') return;
-                
-                e.preventDefault();
-                e.stopPropagation();
-                
-                // Toggle expanded state
-                container.classList.toggle('expanded');
-                const articlesSection = container.querySelector('.articles-section');
-                articlesSection.classList.toggle('expanded');
-            }});
-            
-            // Prevent link clicks from toggling
-            container.querySelectorAll('a').forEach(link => {{
-                link.addEventListener('click', (e) => {{
-                    e.stopPropagation();
-                }});
-            }});
+        function toggleArticles(element) {{
+            const container = element.closest(".container");
+            const articlesSection = container.querySelector(".articles-section");
+            container.classList.toggle("expanded");
+            articlesSection.classList.toggle("expanded");
+        }}
+
+        function openPopup(event, element) {{
+            event.stopPropagation();
+            element.closest(".bias-section").querySelector(".media-popup").style.display = "flex";
+        }}
+
+        document.addEventListener("click", function(event) {{
+            if (event.target.classList.contains("media-popup")) {{
+                event.target.style.display = "none";
+                event.stopPropagation();
+            }}
         }});
     </script>
     </body>
@@ -300,41 +635,11 @@ def create_publish_timeline_html(timeline: DataFrame, agency_owners: DataFrame) 
             if perc <= 0:
                 continue
 
-            label = f"{label_text} {perc}%" if perc >= 1 else ""
             bias_segments.append(
-                f'<div class="bias-segment {css_class}" style="width: {perc}%">{label}</div>'
+                f'<div class="bias-segment {css_class}" style="width: {perc}%"></div>'
             )
 
         bias_bar_html = "".join(bias_segments)
-
-        # Generate ownership distribution - stacked bar like bias chart
-        owners = row.get("owner_reach") or []
-        owners_sorted = sorted(
-            owners, key=lambda o: o.get("total_reach", 0), reverse=True
-        )
-        total_reach = sum(o.get("total_reach", 0) for o in owners)
-
-        owner_segments = []
-
-        for o in owners_sorted:
-            reach_percentage = (o.get("total_reach") / total_reach) * 100
-
-            # Only show owners with more than 15%
-            if reach_percentage <= 10:
-                continue
-
-            owner = o.get("owner")
-            color = agency_owners.filter(pl.col("owner") == owner)["color"].item(0)
-
-            # Show label with percentage, similar to bias chart
-            perc_int = int(reach_percentage)
-            label = f"{owner} {perc_int}%" if perc_int >= 1 else ""
-
-            owner_segments.append(
-                f'<div  class="bias-segment" style="width: {reach_percentage}%; background-color: {color}">{label}</div>'
-            )
-
-        owner_bar_html = "".join(owner_segments)
 
         # Generate articles HTML
         articles_html_items = []
@@ -342,48 +647,51 @@ def create_publish_timeline_html(timeline: DataFrame, agency_owners: DataFrame) 
             time_str = article["publish_date"]
             article_html = f"""
                     <div class="article-item">
-                        <a href="{article["link"]}" class="article-link">{article["title"]}</a>
-                        <div class="article-meta">{article["feed"]} • {time_str}</div>
+                        <a href="{article["link"]}" class="article-link" target="_blank" rel="noopener">{article["title"]}</a>
+                        <div class="article-meta">{article["feed"]} · {time_str}</div>
                     </div>"""
             articles_html_items.append(article_html)
 
         articles_html = "".join(articles_html_items)
 
+        # Generate per-cluster media reach visualization
+        cluster_feeds = [f for f in row["feeds"]]
+        cluster_media = media_lookup.filter(pl.col("Medium").is_in(cluster_feeds))
+        media_popup_html = (
+            f'<div class="popup-title">Verdeling bronnen — links / rechts &amp; bereik</div>'
+            + _df_to_reach_bars(cluster_media)
+            + '<div class="dist-axis"><span>Links</span><span>Rechts</span></div>'
+        )
+
         # Build cluster HTML using condensed template
         cluster_html = f"""
         <div class="container">
             <div class="header">
-                <h1 class="cluster-title">{row["title"]}</h1>
+                <h2 class="cluster-title">{row["title"]}</h2>
                 <div class="metadata">
-                    <div class="metadata-item">
-                        <span>{row["num_articles"]} nieuwsberichten</span>
-                    </div>
-                    <div class="metadata-item">
-                        <span>{row["num_feeds"]} bronnen</span>
-                    </div>
-                    <div class="metadata-item">
-                        <span>{row["max_published_date_fmt"]}</span>
-                    </div>
+                    <span class="metadata-item">{row["num_articles"]} berichten</span>
+                    <span class="metadata-item">{row["num_feeds"]} bronnen</span>
+                    <span class="metadata-item">{row["max_published_date_fmt"]}</span>
                 </div>
             </div>
-            
             <div class="bias-section">
-                <div class="bias-bar-container">
+                <div class="bias-bar-container" onclick="openPopup(event, this)">
                     {bias_bar_html}
                 </div>
-                <br>
-                <div class="bias-bar-container">
-                    {owner_bar_html}
-                </div>            
-            </div>            
-            
-            <div class="expand-indicator">
-                Bekijk nieuwsberichten
+                <div class="bias-legend"><span>Links</span><span>Rechts</span></div>
+                <div class="media-popup">
+                    <div class="media-popup-content" onclick="event.stopPropagation()">
+                        <span class="close-btn" onclick="this.closest('.media-popup').style.display='none'">&times;</span>
+                        {media_popup_html}
+                    </div>
+                </div>
             </div>
-            
+            <div class="expand-indicator" onclick="toggleArticles(this)">
+                Bekijk berichten
+            </div>
             <div class="articles-section">
                 <div class="articles-inner">
-                    <h2 class="section-title">Nieuwsberichten ({row["num_articles"]})</h2>
+                    <h3 class="section-title">Nieuwsberichten ({row["num_articles"]})</h3>
                     {articles_html}
                 </div>
             </div>
