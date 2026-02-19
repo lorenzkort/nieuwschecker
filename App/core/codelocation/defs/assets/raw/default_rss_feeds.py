@@ -35,6 +35,7 @@ def parse_article(article: Dict[str, Any]) -> Dict[str, Any]:
 
     title = article.get("title")
     link = article.get("link")
+    base_url = urlparse(link)[1]
     summary_html = article.get("summary_detail", {}).get("value", "")
     if not summary_html:
         # Get description, but ensure it's a string
@@ -42,13 +43,38 @@ def parse_article(article: Dict[str, Any]) -> Dict[str, Any]:
         summary_html = description if isinstance(description, str) else ""
 
     summary = html_to_text(summary_html) if summary_html else ""
+    image_url = None
+
+    image_url = list(article.get("links", []))
+    image_url = next(
+        (l.get("href") for l in image_url if l.get("type", "").startswith("image/")),
+        None,
+    )
+    if image_url is None:
+        # Fallback to media_content if no image in links
+        media_content = article.get("media_content", [])
+        if media_content:
+            image_url = media_content[0].get("url")
+    if image_url is None:
+        # metro type image
+        summary_html = article.get("summary_detail", {}).get("value", "")
+        if summary_html:
+            from bs4 import BeautifulSoup
+
+            soup = BeautifulSoup(summary_html, "html.parser")
+            img_tag = soup.find("img")
+            if img_tag and img_tag.get("src"):
+                image_url = img_tag.get("src")
+
+    print(image_url)
 
     return {
         "publish_date": publish_date,
         "title": title,
         "link": link,
-        "base_url": urlparse(link)[1],
+        "base_url": base_url,
         "summary": summary,
+        "image_url": image_url,
     }
 
 
