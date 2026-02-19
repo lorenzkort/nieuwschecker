@@ -164,6 +164,15 @@ def create_publish_timeline_html(
                 --font-mono: 'JetBrains Mono', 'Fira Code', monospace;
             }}
 
+            :root.dark {{
+                --color-bg-primary:     #1C1A17;
+                --color-bg-secondary:   #232019;
+                --color-text-primary:   #EDE8DF;
+                --color-text-secondary: #80796E;
+                --color-border:         rgba(237,232,223,0.10);
+                --color-border-strong:  rgba(237,232,223,0.22);
+            }}
+
             *, *::before, *::after {{
                 margin: 0;
                 padding: 0;
@@ -216,6 +225,26 @@ def create_publish_timeline_html(
 
             .site-header .header-meta a:hover {{
                 color: var(--color-text-primary);
+            }}
+
+            .theme-btn {{
+                background: none;
+                border: 1px solid var(--color-border-strong);
+                color: var(--color-text-secondary);
+                font-family: var(--font-body);
+                font-size: 11px;
+                font-weight: 500;
+                letter-spacing: 0.08em;
+                text-transform: uppercase;
+                padding: 4px 10px;
+                cursor: pointer;
+                margin-left: 16px;
+                transition: color 0.15s, border-color 0.15s;
+            }}
+
+            .theme-btn:hover {{
+                color: var(--color-text-primary);
+                border-color: var(--color-text-primary);
             }}
 
             .content-area {{
@@ -619,7 +648,10 @@ def create_publish_timeline_html(
     <body>
     <header class="site-header">
         <h1>Nieuws Checker</h1>
-        <span class="header-meta"><a href="https://github.com/lorenzkort/nieuwschecker" target="_blank" rel="noopener">github</a></span>
+        <span class="header-meta">
+            <a href="https://github.com/lorenzkort/nieuwschecker" target="_blank" rel="noopener">github</a>
+            <button class="theme-btn" id="theme-toggle" onclick="toggleTheme()" aria-label="Schakel donker/licht thema">Donker</button>
+        </span>
     </header>
     <div class="content-area">
     {news_clusters}
@@ -627,6 +659,31 @@ def create_publish_timeline_html(
     <footer class="site-footer">Nieuws Checker &middot; Beta &middot; <a href="https://github.com/lorenzkort/nieuwschecker" target="_blank" rel="noopener">broncode</a></footer>
     <!-- Cloudflare Web Analytics --><script defer src='https://static.cloudflareinsights.com/beacon.min.js' data-cf-beacon='{{"token": "{cloudflare_site_token}" }}'></script><!-- End Cloudflare Web Analytics -->
     <script>
+        // ── Dark mode ──────────────────────────────────────────────────
+        (function () {{
+            const saved = localStorage.getItem('theme');
+            const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+            if (saved === 'dark' || (!saved && prefersDark)) {{
+                document.documentElement.classList.add('dark');
+            }}
+        }})();
+
+        function toggleTheme() {{
+            const isDark = document.documentElement.classList.toggle('dark');
+            localStorage.setItem('theme', isDark ? 'dark' : 'light');
+            updateThemeBtn(isDark);
+        }}
+
+        function updateThemeBtn(isDark) {{
+            const btn = document.getElementById('theme-toggle');
+            if (btn) btn.textContent = isDark ? 'Licht' : 'Donker';
+        }}
+
+        document.addEventListener('DOMContentLoaded', function() {{
+            updateThemeBtn(document.documentElement.classList.contains('dark'));
+        }});
+
+        // ── Articles expand ────────────────────────────────────────────
         function toggleArticles(element) {{
             const container = element.closest(".container");
             const articlesSection = container.querySelector(".articles-section");
