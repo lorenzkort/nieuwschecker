@@ -1,5 +1,4 @@
 import os
-from datetime import datetime
 
 import dagster as dg
 import polars as pl
@@ -93,36 +92,10 @@ def create_publish_timeline_html(
 ) -> None:
     cloudflare_site_token = os.environ.get("CLOUDFLARE_SITE_TOKEN")
 
-    cluster_publish_delay_hours = 5
-    timeline_cutoff_days = 14
-
     output_path = DATA_DIR / "website" / "index.html"
     server_path = "nieuwschecker/"
 
-    now = datetime.now()
-
-    df = (
-        timeline.filter(  # show relevant clusters only
-            (
-                pl.col("num_feeds")
-                > 8
-                # | (pl.col("blindspot_left") == 1)
-                # | (pl.col("blindspot_right") == 1)
-                # | (pl.col("single_owner_high_reach") == 1)
-            )
-        )
-        .filter(  # only show clusters older than delay
-            (
-                pl.col("max_published_date")
-                < (now - pl.duration(hours=cluster_publish_delay_hours))
-            )
-            & (
-                pl.col("max_published_date")
-                > (now - pl.duration(days=timeline_cutoff_days))
-            )
-        )
-        .sort("max_published_date", descending=True)
-    )
+    df = timeline
 
     media_lookup = (
         news_agencies.filter(pl.col("rss_available") == 1)
@@ -141,10 +114,27 @@ def create_publish_timeline_html(
 
     logging.info(f"Generating timeline with {len(df)} news clusters...")
 
+    # Debug: log blindspot stats
+    if "blindspot_left" in df.columns and "blindspot_right" in df.columns:
+        n_left = df.filter(df["blindspot_left"] == 1).height
+        n_right = df.filter(df["blindspot_right"] == 1).height
+        logging.info(f"Blindspot clusters — left: {n_left}, right: {n_right}")
+        if n_left > 0:
+            logging.info(
+                f"  blindspot_left titles: {df.filter(df['blindspot_left'] == 1)['title'].to_list()}"
+            )
+        if n_right > 0:
+            logging.info(
+                f"  blindspot_right titles: {df.filter(df['blindspot_right'] == 1)['title'].to_list()}"
+            )
+    else:
+        logging.warning("blindspot_left / blindspot_right columns NOT found in df!")
+
     # HTML Template
     html_template = """<!DOCTYPE html>
     <html lang="nl">
     <head>
+        <link rel="icon" type="image/svg+xml" href="/favicon.svg">
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
         <title>Nieuws Checker</title>
@@ -255,6 +245,14 @@ def create_publish_timeline_html(
                 letter-spacing: -0.02em;
                 margin-bottom: 6px;
                 line-height: 1.3;
+                flex: 1;
+            }}
+
+            .title-row {{
+                display: flex;
+                align-items: flex-start;
+                gap: 12px;
+                margin-bottom: 6px;
             }}
 
             .metadata {{
@@ -276,6 +274,48 @@ def create_publish_timeline_html(
             .metadata-item .sep {{
                 margin: 0 2px;
                 color: var(--color-border-strong);
+            }}
+
+            /* ── Blindspot tag ── */
+            .blindspot-tag {{
+                display: inline-block;
+                flex-shrink: 0;
+                align-self: center;
+                font-size: 11px;
+                font-weight: 600;
+                text-transform: uppercase;
+                letter-spacing: 0.08em;
+                padding: 4px 10px;
+                border-radius: 4px;
+                white-space: nowrap;
+            }}
+
+            .blindspot-tag--left {{
+                background: #1D4ED8;
+                color: #FFFFFF;
+            }}
+
+            .blindspot-tag--right {{
+                background: #B91C1C;
+                color: #FFFFFF;
+            }}
+
+            .tag-short {{
+                display: none;
+            }}
+
+            @media (max-width: 480px) {{
+                .tag-full {{
+                    display: none;
+                }}
+                .tag-short {{
+                    display: inline;
+                }}
+                .blindspot-tag {{
+                    white-space: normal;
+                    text-align: center;
+                    line-height: 1.3;
+                }}
             }}
 
             /* ── Bias bar ── */
@@ -392,7 +432,7 @@ def create_publish_timeline_html(
             }}
 
             .article-item {{
-                padding: 6px 0;
+                padding: 10px 0;
                 border-bottom: 1px solid var(--color-border);
             }}
 
@@ -613,7 +653,36 @@ def create_publish_timeline_html(
     # Generate news clusters HTML
     clusters_html = []
 
-    for row in df.iter_rows(named=True):
+    # Interleave blindspot_left and blindspot_right clusters, then append normal ones
+    left_rows = [r for r in df.iter_rows(named=True) if r.get("blindspot_left") == 1]
+    right_rows = [r for r in df.iter_rows(named=True) if r.get("blindspot_right") == 1]
+    normal_rows = [
+        r
+        for r in df.iter_rows(named=True)
+        if r.get("blindspot_left") != 1 and r.get("blindspot_right") != 1
+    ]
+
+    ordered_rows = []
+    li, ri = 0, 0
+    toggle = "left"
+    while li < len(left_rows) or ri < len(right_rows):
+        if toggle == "left" and li < len(left_rows):
+            ordered_rows.append(left_rows[li])
+            li += 1
+            toggle = "right"
+        elif toggle == "right" and ri < len(right_rows):
+            ordered_rows.append(right_rows[ri])
+            ri += 1
+            toggle = "left"
+        elif li < len(left_rows):
+            ordered_rows.append(left_rows[li])
+            li += 1
+        else:
+            ordered_rows.append(right_rows[ri])
+            ri += 1
+    ordered_rows.extend(normal_rows)
+
+    for row in ordered_rows:
         # Calculate bias percentages
         left_perc = int(row.get("left", 0) * 100) if "left" in row else 0
         centre_left_perc = int(row["centre left"] * 100)
@@ -663,11 +732,22 @@ def create_publish_timeline_html(
             + '<div class="dist-axis"><span>Links</span><span>Rechts</span></div>'
         )
 
+        # Build blindspot tag if applicable
+        if row.get("blindspot_left") == 1:
+            blindspot_tag_html = '<span class="blindspot-tag blindspot-tag--left"><span class="tag-full">Blinde vlek voor links</span><span class="tag-short">Blinde vlek<br>voor links</span></span>'
+        elif row.get("blindspot_right") == 1:
+            blindspot_tag_html = '<span class="blindspot-tag blindspot-tag--right"><span class="tag-full">Blinde vlek voor rechts</span><span class="tag-short">Blinde vlek<br>voor rechts</span></span>'
+        else:
+            blindspot_tag_html = ""
+
         # Build cluster HTML using condensed template
         cluster_html = f"""
         <div class="container">
             <div class="header">
-                <h2 class="cluster-title">{row["title"]}</h2>
+                <div class="title-row">
+                    <h2 class="cluster-title">{row["title"]}</h2>
+                    {blindspot_tag_html}
+                </div>
                 <div class="metadata">
                     <span class="metadata-item">{row["num_articles"]} berichten</span>
                     <span class="metadata-item">{row["num_feeds"]} bronnen</span>
