@@ -128,7 +128,10 @@ def add_features(
     )
     new_articles = rss_feeds_historic.filter(
         ~pl.col("link").is_in(processed_rss_feeds["link"])
+    ).select(
+        "publish_date", "title", "link", "base_url", "summary", "ingestion_timestamp"
     )
+
     logging.info(f"New articles to process for feature addition: {len(new_articles)}")
 
     full_text = (
