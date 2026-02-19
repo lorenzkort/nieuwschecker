@@ -262,7 +262,7 @@ def cross_feed_clusters(
     Returns:
         DataFrame with only cross-feed clusters
     """
-    min_feeds: int = 2
+    min_feeds: int = 1
 
     # Two-stage clustering parameters
     stage1_threshold: float = 0.75  # Broad topical grouping
