@@ -1,10 +1,14 @@
+import os
 from pathlib import Path
 
-from dagster import EnvVar, get_dagster_logger
+from dagster import get_dagster_logger
+from dotenv import load_dotenv
+
+load_dotenv()
 
 logging = get_dagster_logger()
 
-DATA_DIR = Path(EnvVar("DATA_DIR").get_value() or "")
+DATA_DIR = Path(os.getenv("DATA_DIR", ""))
 
 
 def parse_default_rss_urls() -> list:
